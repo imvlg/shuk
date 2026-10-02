@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Shuk — a deterministic knowledge engine built from open sources." />
+    <title>Shuk</title>
+    <link rel="preconnect" href="https://en.wikipedia.org" />
+    <style>
+      :root { --paper:#f7f7f4; --ink:#20211f; --muted:#656760; --line:#dcded7; --card:#fff; --accent:#126b4e; --soft:#e7efe9; }
+      :root[data-theme="dark"] { --paper:#171917; --ink:#f1f2ed; --muted:#afb2aa; --line:#343833; --card:#20231f; --accent:#8ddab7; --soft:#25362d; }
+      * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--paper); line-height:1.55; }
+      button,input,select,textarea { font:inherit; } button { cursor:pointer; } a { color:inherit; }
+      .site-header { max-width:1180px; margin:auto; padding:26px 28px; display:flex; justify-content:space-between; align-items:center; }
+      .brand { font: bold 29px Georgia,serif; letter-spacing:-1.5px; text-decoration:none; } .brand span { color:var(--accent); }
+      .header-actions,.result-toolbar>div { display:flex; align-items:center; gap:9px; }
+      .quiet-button,.icon-button { border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:8px; padding:8px 12px; font-size:14px; }
+      .icon-button { width:40px; height:40px; padding:0; display:grid; place-items:center; font-size:20px; }
+      .hero { max-width:820px; margin:88px auto 80px; padding:0 28px; text-align:center; }
+      .eyebrow { color:var(--accent); font-size:11px; font-weight:750; letter-spacing:1.45px; margin:0 0 10px; }
+      .hero-copy { max-width:560px; color:var(--muted); font-size:17px; margin:24px auto 30px; }
+      .search-form { display:flex; max-width:690px; padding:6px; gap:6px; margin:auto; border:1px solid var(--line); border-radius:13px; background:var(--card); box-shadow:0 10px 30px #00000008; }
+      .search-form input { min-width:0; flex:1; border:0; outline:0; background:transparent; padding:11px 14px; color:var(--ink); }
+      .search-form button { border:0; border-radius:9px; padding:0 17px; color:#fff; background:var(--accent); font-weight:650; }
+      .loading { display:flex; justify-content:center; align-items:center; gap:12px; padding:40px; color:var(--muted); }
+      .loader { width:19px; height:19px; border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .75s linear infinite; } @keyframes spin { to { transform:rotate(360deg); } }
+      .hidden { display:none !important; } .results { max-width:1180px; margin:0 auto 80px; padding:0 28px; }
+      .result-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-bottom:14px; font-size:13px; color:var(--muted); }
+      .result-toolbar p { margin:0; } .answer-card { display:flex; min-height:240px; overflow:hidden; border-radius:16px; background:var(--card); border:1px solid var(--line); }
+      .answer-content { padding:38px; flex:1; } .answer-card h2,.section-heading h2,.card-heading h2 { font:500 clamp(30px,4vw,46px)/1.05 Georgia,serif; letter-spacing:-1.5px; margin:0; }
+      .summary { max-width:680px; font-size:17px; color:var(--muted); } .source-link { display:inline-block; margin-top:11px; color:var(--accent); font-size:14px; font-weight:650; text-decoration:none; }
+      .lead-image { width:34%; object-fit:cover; min-height:240px; } .fact-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:12px 0 70px; }
+      .fact { padding:16px; min-height:92px; background:var(--soft); border-radius:10px; } .fact p { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.65px; margin:0 0 4px; }
+      .fact strong { font-size:14px; line-height:1.35; } .section-heading { margin-bottom:18px; } .section-heading h2,.card-heading h2 { font-size:29px; }
+      .accordion { border-top:1px solid var(--line); margin-bottom:68px; } .accordion details { border-bottom:1px solid var(--line); }
+      .accordion summary { list-style:none; padding:18px 4px; font-weight:650; cursor:pointer; } .accordion summary::after { content:"+"; float:right; color:var(--accent); font-size:20px; }
+      .accordion details[open] summary::after { content:"−"; } .article-text { max-width:760px; padding:0 4px 21px; color:var(--muted); }
+      .knowledge-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } .knowledge-card { padding:25px; border:1px solid var(--line); border-radius:13px; background:var(--card); }
+      .card-heading { margin-bottom:18px; } .knowledge-card iframe { width:100%; height:265px; border:0; border-radius:8px; filter:grayscale(.2); }
+      .media-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .media-strip a { aspect-ratio:1; } .media-strip img { width:100%; height:100%; object-fit:cover; border-radius:7px; }
+      .book-list { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; } .book-list li { border-left:2px solid var(--accent); padding-left:10px; font-size:13px; }
+      .book-list a { text-decoration:none; font-weight:650; } .book-list span { display:block; color:var(--muted); margin-top:3px; }
+      .method-note { text-align:center; color:var(--muted); font-size:12px; margin:48px 0 0; } .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+      .article-text p { margin-top:0; }
+      @media (max-width:650px) { .site-header { padding:17px 18px; } .hero { margin:54px auto 48px; padding:0 18px; } .results { padding:0 18px; } .result-toolbar { align-items:flex-start; flex-direction:column; }
+        .search-form { flex-wrap:nowrap; } .answer-card { flex-direction:column-reverse; } .answer-content { padding:25px; } .lead-image { width:100%; height:220px; min-height:0; }
+        .knowledge-grid { grid-template-columns:1fr; } .book-list { grid-template-columns:1fr; } .media-strip { gap:5px; } }
+    </style>
+    <script>
+      try {
+        var saved = localStorage.getItem("shuk-theme");
+        var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      } catch (e) {}
+    </script>
+    <style>
+      /* Interface */
+      :root { color-scheme: light; }
+      :root[data-theme="dark"] { color-scheme: dark; }
+      button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .hero { margin: 78px auto 62px; transition: margin .3s ease; }
+      .hero.compact { margin: 18px auto 34px; }
+      .hero h1 { font-size: clamp(42px, 7vw, 70px); letter-spacing: -3px; }
+      .hero-copy { font-size: 15px; max-width: 430px; margin: 9px auto 20px; }
+      .hero.compact .hero-copy { display: none; }
+      .search-form { max-width: 620px; border-radius: 9px; box-shadow: none; }
+      .search-form:focus-within { border-color: var(--accent); }
+      .search-form button { width: 48px; padding: 0; display: grid; place-items: center; font: 400 30px/1 Georgia, serif; }
+      .search-form button:hover, .export-all:hover { filter: brightness(1.08); }
+      .quiet-button:hover, .icon-button:hover { border-color: var(--accent); color: var(--accent); }
+      .quiet-button:disabled { opacity: .45; cursor: default; }
+      .result-toolbar { padding-top: 3px; flex-wrap: wrap; }
+      .result-toolbar > div { flex-wrap: wrap; }
+      .selection-tip { font-size: 12px; color: var(--muted); margin: -2px 0 16px; }
+      .answer-card.no-image .lead-image { display: none; }
+      .answer-content .desc { color: var(--muted); margin: 6px 0 0; font-size: 15px; }
+      .article-text p { margin: 0 0 12px; }
+      .article-text .text-button { margin: 4px 0 6px; }
+      .empty-state { display: none; }
+      .source-matches { margin: 0 0 26px; }
+      #all-source-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+      .source-result { padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: flex; flex-direction: column; }
+      .source-result .source-name { color: var(--accent); text-transform: uppercase; letter-spacing: .8px; font-size: 10px; font-weight: 750; }
+      .source-result h3 { margin: 6px 0; font: 500 20px/1.2 Georgia, serif; overflow-wrap: anywhere; }
+      .source-result p { color: var(--muted); font-size: 13px; margin: 6px 0 10px; flex: 1; overflow-wrap: anywhere; }
+      .source-result a { color: var(--accent); font-size: 13px; }
+      .source-result .card-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .source-result button { margin-top: 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--ink); padding: 5px 8px; font-size: 12px; }
+      .source-result button:hover { border-color: var(--accent); color: var(--accent); }
+      .source-status { color: var(--muted); font-size: 13px; grid-column: 1 / -1; margin: 0 0 12px; }
+      .more-row { text-align: center; margin: 18px 0 0; }
+      .book-list li { overflow-wrap: anywhere; }
+      @media (min-width: 651px) {
+        .knowledge-card:last-child { grid-column: auto; }
+        #books-card .book-list, #research-card .book-list { grid-template-columns: repeat(2, 1fr); }
+      }
+      .toast { position: fixed; z-index: 30; left: 50%; bottom: 24px; transform: translate(-50%, 20px); padding: 10px 16px; border-radius: 99px; background: var(--ink); color: var(--paper); font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; }
+      .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+      /* Notebook */
+      .note-workspace { position: fixed; z-index: 10; inset: 0; display: none; background: var(--paper); color: var(--ink); }
+      .note-workspace.open { display: flex; flex-direction: column; }
+      .workspace-header { flex: none; min-height: 72px; padding: 14px 28px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .workspace-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .workspace-actions select.quiet-button { appearance: none; padding-right: 12px; }
+      .workspace-actions select option { background: var(--card); color: var(--ink); }
+      .workspace-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px 1fr; }
+      .workspace-sidebar { overflow: auto; padding: 22px 18px; border-right: 1px solid var(--line); }
+      .sidebar-find { width: 100%; margin: 4px 0 12px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); }
+      .workspace-main { overflow: auto; min-width: 0; }
+      .workspace-note { width: 100%; padding: 11px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; }
+      .workspace-note:hover, .workspace-note.active { background: var(--soft); }
+      .workspace-note strong, .workspace-note span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-note span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .workspace-editor { width: min(820px, 100%); margin: 0 auto; padding: 44px 40px 80px; }
+      #note-title-input { width: 100%; border: 0; outline: 0; padding: 0; background: transparent; color: var(--ink); font: 500 clamp(32px, 5vw, 52px)/1.1 Georgia, serif; letter-spacing: -1.5px; }
+      .note-source { min-height: 20px; color: var(--accent); font-size: 13px; margin: 8px 0 10px; }
+      .note-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .note-controls select, .note-controls input { padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); }
+      .note-controls input { flex: 1; min-width: 140px; }
+      .note-tabs { display: flex; gap: 4px; margin-left: auto; }
+      .note-tabs .quiet-button { padding: 6px 10px; font-size: 13px; }
+      .note-tabs .quiet-button.on { background: var(--soft); border-color: var(--accent); color: var(--accent); }
+      #delete-note { border: 0; background: transparent; color: var(--muted); font-size: 13px; padding: 6px 4px; }
+      #delete-note:hover { color: #c0392b; }
+      .format-bar { display: flex; gap: 3px; flex-wrap: wrap; margin: 14px 0 0; padding: 5px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+      .format-bar button { min-width: 32px; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font-size: 13px; }
+      .format-bar button:hover { background: var(--soft); }
+      #note-body-input { display: block; width: 100%; min-height: 320px; resize: vertical; border: 0; outline: 0; padding: 14px 0; background: transparent; color: var(--ink); font: 16px/1.7 Inter, ui-sans-serif, system-ui, sans-serif; }
+      .note-preview { min-height: 320px; padding: 8px 0; line-height: 1.75; overflow-wrap: anywhere; }
+      .note-preview h1, .note-preview h2, .note-preview h3 { font-family: Georgia, serif; font-weight: 500; margin: 1.1em 0 .3em; letter-spacing: -.5px; }
+      .note-preview blockquote { margin: .8em 0; padding: 1px 16px; border-left: 3px solid var(--accent); color: var(--muted); }
+      .note-preview code, .note-preview pre { background: var(--soft); border-radius: 5px; padding: 1px 5px; }
+      .note-preview pre { padding: 12px; overflow: auto; }
+      .note-preview ul.todo { list-style: none; padding-left: 4px; }
+      .note-preview input[type=checkbox] { margin-right: 7px; accent-color: var(--accent); }
+      .note-preview img { max-width: 100%; border-radius: 8px; }
+      .autosave-status { color: var(--muted); font-size: 12px; margin: 0; }
+      .note-research-form { display: flex; gap: 7px; margin: 22px 0 0; }
+      .note-research-form input { min-width: 0; flex: 1; padding: 11px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+      .note-research-form button { width: 44px; flex: 0 0 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: var(--accent); color: #fff; }
+      .note-research-form button svg { width: 21px; height: 21px; display: block; }
+      .note-language-choice { display:flex; align-items:center; gap:8px; margin:10px 0 16px; color:var(--muted); font-size:13px; }
+      .note-language-choice select { border:1px solid var(--line); border-radius:7px; background:var(--card); color:var(--ink); padding:7px 9px; }
+      .article-text .quiet-button { margin:6px 0 10px; }
+      .saved-materials { margin:22px 0 28px; padding:18px 0 0; border-top:1px solid var(--line); }
+      .saved-materials h3 { margin:0 0 8px; font:500 20px Georgia,serif; }
+      .saved-materials > p { color:var(--muted); font-size:12px; margin:0 0 12px; }
+      #note-searches { display:flex; flex-direction:column; gap:8px; }
+      #note-searches .source-result { display:grid; grid-template-columns:minmax(130px,.65fr) minmax(0,1.6fr) auto; align-items:start; gap:8px 14px; padding:12px 14px; }
+      #note-searches .source-result h3 { font-size:16px; }
+      #note-searches .source-result .source-name { font-size:9px; letter-spacing:.55px; }
+      #note-searches .source-result .source-copy > p:first-child { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; font-size:13px; line-height:1.45; }
+      #note-searches .source-result .source-copy details { display:none; }
+      #note-searches .source-result .card-actions { align-items:flex-end; }
+      #note-searches .source-result .card-actions > span { flex-wrap:wrap; justify-content:flex-end; }
+      #note-searches .source-result .card-actions button { padding:5px 7px; font-size:11px; }
+      #note-visuals { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+      .saved-map,.saved-image { min-width:0; padding:10px; border:1px solid var(--line); border-radius:9px; background:var(--card); }
+      .saved-map iframe { width:100%; height:170px; border:0; border-radius:6px; }
+      .saved-image img { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:6px; background:var(--soft); }
+      .saved-visual-title { margin:8px 0 2px; font-size:13px; font-weight:650; }
+      .saved-visual-actions { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+      .saved-visual-actions a { color:var(--accent); font-size:12px; }
+      .media-strip figure { position:relative; aspect-ratio:1; margin:0; overflow:hidden; border-radius:7px; }
+      .media-strip .media-image-trigger { display:block; width:100%; height:100%; padding:0; border:0; background:var(--soft); }
+      .media-strip .media-image-trigger img { display:block; width:100%; height:100%; object-fit:cover; border-radius:7px; transition:transform .18s ease; }
+      .media-strip .media-image-trigger:hover img { transform:scale(1.025); }
+      .media-strip .photo-actions { position:absolute; inset:auto 7px 7px; display:flex; justify-content:center; align-items:center; gap:6px; padding:6px; border:1px solid var(--line); border-radius:8px; background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:0 4px 16px #0002; }
+      .media-strip .photo-actions .quiet-button { padding:5px 8px; font-size:11px; white-space:nowrap; }
+      .language-choice { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+      .language-choice select { border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); padding: 6px 9px; }
+      .research-extra { margin-top: 10px; }
+      .selection-popover { position: fixed; z-index: 55; transform: translate(-50%, -100%); padding: 5px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); box-shadow: 0 8px 28px #0002; }
+      .selection-popover button { border: 1px solid var(--ink); border-radius: 6px; background: var(--ink); color: var(--paper); padding: 8px 11px; font-weight: 650; white-space: nowrap; }
+      .selection-popover button:hover { opacity: .88; }
+      .dialog-overlay { position: fixed; z-index: 60; inset: 0; display: none; place-items: center; padding: 18px; background: #0007; }
+      .dialog-overlay.open { display: grid; }
+      .dialog-panel { width: min(100%, 430px); padding: 22px; border: 1px solid var(--line); border-radius: 13px; background: var(--card); box-shadow: 0 16px 50px #0003; }
+      .dialog-panel h2 { margin: 0 0 8px; font: 500 24px Georgia,serif; }
+      .dialog-panel p { color: var(--muted); font-size: 14px; }
+      .dialog-panel select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); }
+      .dialog-panel input { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+      .translate-panel { display: none; max-width: 620px; margin: 8px auto 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); text-align: left; }
+      .translate-panel.open { display: block; }
+      .translate-controls { display: flex; gap: 8px; align-items: center; }
+      .translate-controls select { min-width: 0; flex: 1; padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); }
+      .translate-output { min-height: 24px; margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+      .pending-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin: 14px 0 6px; }
+      .pending-list { display:flex; flex-direction:column; gap:8px; }
+      .pending-list .source-result { display:grid; grid-template-columns:30px minmax(0,1fr); }
+      .pending-list .source-result > input { width:18px; height:18px; margin:5px; accent-color:var(--accent); }
+      @media (max-width:650px) { .translate-controls { flex-wrap:wrap; } .dialog-panel { padding:18px; } }
+      .note-research-form button:disabled, .format-bar button:disabled { opacity: .45; cursor: not-allowed; }
+      body.notebook-open { overflow: hidden; }
+      body.reader-open { overflow: hidden; }
+      .notebook-hint { color: var(--muted); font-size: 12px; margin: 7px 0; }
+      .note-searches { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 14px 0; }
+      .folder-tools { display: flex; gap: 6px; margin: 8px 0 14px; }
+      .folder-tools button { flex: 1; border: 1px solid var(--line); border-radius: 7px; padding: 7px 5px; background: transparent; color: var(--ink); font-size: 12px; }
+      .folder-tools button:hover:not(:disabled) { border-color: var(--accent); }
+      .folder-tools button:disabled { opacity: .45; cursor: default; }
+      .folder-item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; width: 100%; border: 0; border-radius: 7px; background: transparent; color: var(--muted); text-align: left; }
+      .folder-item:hover { background: var(--soft); }
+      .folder-item.active { color: var(--accent); font-weight: 700; }
+      .workspace-new-note { margin: 12px 0; width: 100%; padding: 9px; border: 1px dashed var(--line); background: transparent; color: var(--ink); border-radius: 7px; }
+      .workspace-new-note:hover { border-color: var(--accent); color: var(--accent); }
+      .folder-form { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+      .folder-form input { flex-basis: 100%; min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+      .folder-form button { border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; background: var(--card); color: var(--ink); }
+      #print-note { display: none; }
+      @media print {
+        body > *:not(#print-note) { display: none !important; }
+        #print-note { display: block; max-width: 760px; margin: 0 auto; color: #000; background: #fff; font: 14px/1.6 Georgia, serif; }
+        #print-note h1 { font: 500 32px Georgia, serif; }
+        #print-note blockquote { border-left: 3px solid #126b4e; margin: 1em 0; padding-left: 14px; color: #444; }
+        #print-note .print-source { border-top: 1px solid #ccc; padding: 10px 0; break-inside: avoid; }
+        #print-note a { color: #126b4e; }
+      }
+      @media (max-width: 650px) {
+        .hero { margin: 66px auto 45px; }
+        .hero.compact { margin: 12px auto 24px; }
+        .search-form button { width: 100%; min-height: 43px; }
+        .workspace-header { padding: 10px 14px; }
+        .workspace-grid { grid-template-columns: 1fr; grid-template-rows: minmax(150px, 30%) 1fr; }
+        .workspace-sidebar { padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+        .workspace-editor { padding: 24px 18px 60px; }
+        .note-tabs { margin-left: 0; }
+      }
+      .site-header { justify-content: flex-end; }
+      .hero { display: flex; flex-direction: column; align-items: center; max-width: 760px; margin: 86px auto 64px; }
+      .hero-brand { display: block; margin: 0 0 10px; font-size: clamp(48px, 7vw, 68px); line-height: 1; }
+      .hero-copy { margin: 0 0 24px; font-size: 14px; }
+      .search-form { width: min(100%, 660px); margin: 0 auto; }
+      .search-form input { min-height: 48px; }
+      .search-form button { width: 48px; min-width: 48px; height: 48px; }
+      .hero.compact { margin-top: 12px; margin-bottom: 28px; }
+      .hero.compact .hero-brand { font-size: 34px; margin-bottom: 14px; }
+      #all-source-results { display: flex; flex-direction: column; gap: 10px; }
+      .source-result { display: grid; grid-template-columns: minmax(170px, .7fr) minmax(0, 2fr) auto; align-items: start; gap: 8px 20px; padding: 17px 19px; }
+      .source-result .source-heading { min-width: 0; }
+      .source-result h3 { margin: 5px 0 0; font: 500 19px/1.3 Georgia, serif; }
+      .source-result .source-copy { min-width: 0; }
+      .source-result .source-image-preview { display:block; width:100%; max-height:180px; object-fit:cover; border-radius:7px; margin:0 0 8px; }
+      .source-result p { margin: 0; font-size: 14px; line-height: 1.6; }
+      .source-result details { margin-top: 7px; }
+      .source-result details summary { color: var(--accent); cursor: pointer; font-size: 12px; }
+      .source-result details p { margin-top: 7px; white-space: pre-line; }
+      .source-result .card-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+      .source-result .card-actions > span { display: flex; gap: 6px; }
+      .source-status { margin: 4px 0 8px; }
+      @media (max-width: 700px) {
+        .site-header { padding: 12px 16px; }
+        .hero { width: 100%; margin: 48px auto 38px; padding: 0 16px; }
+        .hero-brand { margin-bottom: 10px; font-size: 52px; }
+        .hero-copy { margin-bottom: 18px; }
+        .search-form { width: 100%; max-width: 560px; flex-wrap: nowrap; gap: 5px; padding: 5px; }
+        .search-form input { width: 0; min-width: 0; padding: 9px 10px; font-size: 16px; }
+        .search-form button { flex: 0 0 46px; width: 46px; min-width: 46px; height: 46px; }
+        .hero.compact { margin: 8px auto 22px; }
+        .hero.compact .hero-brand { font-size: 34px; margin-bottom: 8px; }
+        .results { padding: 0 14px; }
+        .result-toolbar > div { width: 100%; gap: 6px; }
+        .result-toolbar .quiet-button { flex: 1 1 auto; padding: 8px 7px; font-size: 12px; }
+        .answer-content { padding: 22px 20px; }
+        .summary { font-size: 16px; }
+        .knowledge-card { padding: 18px; }
+        .source-result { grid-template-columns: minmax(0, 1fr); gap: 9px; padding: 15px; }
+        .source-result .card-actions { flex-direction: row; align-items: center; justify-content: space-between; }
+        .source-result .source-name { font-size: 10px; }
+        .source-result h3 { font-size: 18px; }
+        .source-result p { font-size: 14px; }
+        .note-searches { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 380px) {
+        .header-actions { gap: 6px; }
+        .icon-button { width: 36px; height: 36px; }
+        .result-toolbar > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      .source-result button[data-read-source], .source-result button[data-read-note-source] { color: var(--accent); }
+      .answer-source-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+      .answer-source-actions .source-link { margin-top: 11px; }
+      .reader-overlay { position: fixed; z-index: 40; inset: 0; display: none; background: color-mix(in srgb, #000 42%, transparent); padding: 20px; }
+      .reader-overlay.open { display: grid; place-items: center; }
+      .reader-panel { display: flex; flex-direction: column; width: min(900px, 100%); max-height: min(90vh, 1000px); overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px #0003; }
+      .reader-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+      .reader-header p { margin: 0; color: var(--muted); font-size: 12px; }
+      .reader-header-actions { display: flex; gap: 8px; align-items: center; }
+      .reader-body { overflow: auto; padding: 32px clamp(20px, 6vw, 64px) 56px; }
+      .reader-body h2 { margin: 0 0 8px; font: 500 clamp(28px, 5vw, 42px)/1.1 Georgia, serif; letter-spacing: -1px; }
+      .reader-meta { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+      .reader-content { max-width: 700px; margin: auto; font: 16px/1.8 Georgia, serif; overflow-wrap: anywhere; }
+      .reader-content h3 { margin: 1.6em 0 .5em; font: 500 24px/1.2 Georgia, serif; }
+      .reader-content p { margin: 0 0 1em; }
+      .reader-status { color: var(--muted); font: 13px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+      .reader-citation { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); font: 12px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; color: var(--muted); }
+      .reader-citation a { color: var(--accent); }
+      .reader-overlay .quiet-button:disabled { opacity: .45; }
+      @media (max-width: 650px) {
+        #note-searches .source-result { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+        #note-searches .source-result .card-actions { flex-direction: row; align-items: center; }
+        #note-searches .source-result .card-actions > span { justify-content: flex-start; }
+        .reader-overlay { padding: 0; }
+        .reader-overlay.open { place-items: stretch; }
+        .reader-panel { width: 100%; height: 100%; max-height: none; border-radius: 0; border: 0; }
+        .reader-header { padding: 12px 14px; }
+        .reader-body { padding: 26px 20px 40px; }
+        .reader-header-actions .quiet-button { padding: 7px 9px; font-size: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-actions">
+        <button class="icon-button" id="notes-button" type="button" aria-label="Open saved notes" title="Notes">▤<span class="sr-only" id="note-count">0</span></button>
+        <button class="icon-button" id="theme-button" data-theme-toggle type="button" aria-label="Switch colour theme" title="Switch theme">◐</button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" id="search-area">
+        <a class="brand hero-brand" href="#top" id="brand" aria-label="Shuk home">shuk<span>.</span></a>
+        <p class="hero-copy"> knowledge, assembled </p>
+        <form class="search-form" id="search-form">
+          <label class="sr-only" for="search-input">Search a topic</label>
+          <input id="search-input" type="search" placeholder="" autocomplete="off" required />
+          <button type="button" id="translate-toggle" aria-label="Translate search" title="Translate search" style="background:transparent;color:var(--muted);width:42px;min-width:42px"><span aria-hidden="true">文</span></button>
+          <button type="submit" aria-label="Search"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 4.2 4.2"></path></svg></button>
+        </form>
+        <div class="translate-panel" id="translate-panel" aria-label="Translate query">
+          <div class="translate-controls"><select id="translate-from" aria-label="Translate from"><option value="auto">Detect language</option><option value="en">English</option><option value="uk">Ukrainian</option><option value="ru">Russian</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pl">Polish</option></select><span aria-hidden="true">→</span><select id="translate-to" aria-label="Translate to"><option value="en">English</option><option value="uk">Ukrainian</option><option value="ru">Russian</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="pl">Polish</option></select><button class="quiet-button" id="translate-submit" type="button">Translate</button><button class="quiet-button" id="use-translation" type="button" disabled>Use in search</button></div>
+          <p class="translate-output" id="translate-output" aria-live="polite">Translate the current query into another language.</p>
+          <p class="notebook-hint">The query is sent to a public translation service.</p>
+        </div>
+      </section>
+
+      <section class="loading hidden" id="loading" aria-live="polite">
+        <span class="loader"></span><span id="loading-message">Looking through open sources…</span>
+      </section>
+
+      <section class="results hidden" id="results" aria-live="polite">
+        <div class="result-toolbar">
+          <p id="result-label"></p>
+          <div>
+            <button class="quiet-button" id="save-button" type="button">Save as note</button>
+            <button class="quiet-button" id="export-current-button" type="button">Download full article</button>
+          </div>
+        </div>
+        <p class="query-suggestion hidden" id="query-suggestion">Did you mean <button class="text-button" id="use-suggestion" type="button"></button>?</p>
+        <div class="language-choice hidden" id="language-choice"><label for="search-language">Choose language:</label><select id="search-language" aria-label="Choose result language"></select></div>
+
+        <article class="answer-card" id="answer-card">
+          <div class="answer-content">
+            <p class="eyebrow" id="result-type">OVERVIEW</p>
+            <h2 id="result-title"></h2>
+            <p class="desc hidden" id="result-desc"></p>
+            <p class="summary" id="result-summary"></p>
+        <div class="answer-source-actions"><button class="quiet-button hidden" id="read-overview-button" type="button">Read full article in Shuk</button><a class="source-link" id="wikipedia-link" target="_blank" rel="noreferrer">Source attribution <span>↗</span></a></div>
+          </div>
+          <img class="lead-image hidden" id="lead-image" alt="" />
+        </article>
+
+        <div class="fact-grid" id="fact-grid"></div>
+
+        <div id="sections-wrap" class="hidden">
+          <div class="section-heading">
+            <p class="eyebrow">GO DEEPER</p>
+            <h2>Explore the topic</h2>
+          </div>
+          <div class="accordion" id="article-sections"></div>
+        </div>
+
+        <div class="knowledge-grid" id="knowledge-grid">
+          <section class="knowledge-card hidden" id="map-card">
+            <div class="card-heading"><p class="eyebrow">PLACE</p><h2>On the map</h2></div>
+            <iframe id="map-frame" title="OpenStreetMap" loading="lazy"></iframe>
+            <a class="source-link" id="map-link" target="_blank" rel="noreferrer">Open in OpenStreetMap <span>↗</span></a>
+            <button class="quiet-button hidden" id="save-map-button" type="button">Save map to note</button>
+          </section>
+
+          <section class="knowledge-card hidden" id="media-card">
+            <div class="card-heading"><p class="eyebrow">MEDIA LIBRARY</p><h2>From Wikimedia Commons</h2></div>
+            <div class="media-strip" id="media-strip"></div>
+            <a class="source-link" id="commons-link" target="_blank" rel="noreferrer">Browse Wikimedia Commons <span>↗</span></a>
+          </section>
+
+          <section class="knowledge-card hidden" id="books-card">
+            <div class="card-heading"><p class="eyebrow">FURTHER READING</p><h2>Books and editions</h2></div>
+            <ul class="book-list" id="book-list"></ul>
+            <a class="source-link" id="books-link" target="_blank" rel="noreferrer">Search Open Library <span>↗</span></a>
+          </section>
+
+          <section class="knowledge-card hidden" id="research-card">
+            <div class="card-heading"><p class="eyebrow">RESEARCH</p><h2>Academic work</h2></div>
+            <ul class="book-list" id="research-list"></ul>
+            <a class="source-link" id="research-link" target="_blank" rel="noreferrer">Search Crossref <span>↗</span></a>
+            <div class="research-extra"><a class="source-link" id="okm-link" target="_blank" rel="noreferrer">Explore topic map in Open Knowledge Maps ↗</a></div>
+          </section>
+        </div>
+
+        <div class="section-heading" style="margin-top:68px">
+          <p class="eyebrow">ALL SOURCES</p>
+          <h2>More from open catalogs</h2>
+        </div>
+        <div class="source-matches" id="all-source-results"></div>
+        <p class="more-row hidden" id="more-row"><button class="quiet-button" id="more-button" type="button">Show all</button></p>
+
+        <p class="method-note">Shuk does not generate answers. It selects and displays material returned by open public sources.</p>
+      </section>
+    </main>
+
+    <section class="note-workspace" id="note-workspace" aria-label="Notebook" aria-hidden="true">
+      <header class="workspace-header">
+        <button class="quiet-button" id="close-workspace" type="button">← Search</button>
+        <div class="workspace-actions">
+          <button class="quiet-button" id="new-note" type="button">+ New note</button>
+          <button class="quiet-button" id="create-folder" type="button">+ Folder</button>
+          <select class="quiet-button" id="export-select" aria-label="Export">
+            <option value="">Export ▾</option>
+            <option value="docx">Word (.docx)</option>
+            <option value="pdf">PDF (print dialog)</option>
+            <option value="md">Markdown (.md)</option>
+            <option value="txt">Plain text (.txt)</option>
+            <option value="html">Web page (.html)</option>
+            <option value="all-md">All notes (.md)</option>
+            <option value="json">Full backup (.json)</option>
+          </select>
+          <button class="quiet-button" id="import-button" type="button">Import</button>
+          <input type="file" id="import-file" accept=".json,.md,.txt,text/plain,text/markdown,application/json" class="hidden" />
+          <button class="icon-button" id="workspace-theme" data-theme-toggle type="button" aria-label="Switch colour theme" title="Switch theme">◐</button>
+        </div>
+      </header>
+      <div class="workspace-grid">
+        <aside class="workspace-sidebar">
+          <p class="eyebrow">NOTEBOOK</p>
+          <input class="sidebar-find" id="note-filter" type="search" placeholder="Search notes…" aria-label="Search notes" />
+          <div class="folder-tools"><button id="rename-folder" type="button">Rename folder</button><button id="delete-folder" type="button">Delete folder</button></div>
+          <form id="folder-form" class="folder-form hidden"><input id="folder-name-input" placeholder="Folder name" required /><button id="folder-submit" type="submit">Create</button><button id="cancel-folder" type="button">Cancel</button></form>
+          <div id="workspace-folders"></div>
+          <button class="workspace-new-note" id="new-note-sidebar" type="button">+ New note</button>
+          <div id="workspace-notes"></div>
+        </aside>
+        <div class="workspace-main">
+          <article class="workspace-editor">
+            <input id="note-title-input" aria-label="Note title" placeholder="Untitled note" />
+            <p class="note-source" id="note-source"></p>
+            <div class="note-controls">
+              <select id="note-folder-select" aria-label="Note folder"></select>
+              <input id="note-tags-input" aria-label="Tags" placeholder="tags, separated, by commas" />
+              <div class="note-tabs"><button class="quiet-button on" id="tab-edit" type="button">Write</button><button class="quiet-button" id="tab-preview" type="button">Preview</button></div>
+              <button id="delete-note" type="button">Delete note</button>
+            </div>
+            <div class="format-bar" id="format-bar">
+              <button type="button" data-fmt="h1" title="Heading">H</button><button type="button" data-fmt="bold" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="italic" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="ul" title="Bullet list">• List</button><button type="button" data-fmt="quote" title="Quote">❝</button>
+            </div>
+            <textarea id="note-body-input" aria-label="Note text" placeholder="Write your notes here…"></textarea>
+            <div class="note-preview hidden" id="note-preview"></div>
+            <p class="autosave-status" id="autosave-status">Saved locally</p>
+            <section class="saved-materials hidden" id="saved-research-section"><h3>Saved research</h3><p>Text sources kept with this note.</p><div id="note-searches"></div></section>
+            <section class="saved-materials hidden" id="saved-visual-section"><h3>Maps &amp; images</h3><p>Places and Wikimedia Commons photos saved with this note.</p><div id="note-visuals"></div></section>
+            <section class="saved-materials hidden" id="continue-research-section"><h3>Continue research</h3><p>Search for more information to add to this note.</p>
+            <form class="note-research-form" id="notebook-query-form"><input id="notebook-query" placeholder="Research a topic for this note…" required /><button type="submit" aria-label="Search sources"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 4.2 4.2"></path></svg></button></form>
+            <div class="note-language-choice"><label for="notebook-language">Choose language:</label><select id="notebook-language" aria-label="Choose search language"><option value="en">English</option><option value="uk">Українська</option><option value="ru">Русский</option></select></div>
+            <p class="query-suggestion hidden" id="note-query-suggestion">Did you mean <button class="text-button" id="use-note-suggestion" type="button"></button>?</p>
+            <p class="notebook-hint">Choose useful results below to save them with this note.</p>
+            <div id="note-pending-results"></div>
+            </section>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="reader-overlay" id="reader-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="reader-title">
+      <div class="reader-panel">
+        <header class="reader-header"><p id="reader-provider">Source reader</p><div class="reader-header-actions"><a class="quiet-button" id="reader-original" target="_blank" rel="noreferrer">Original source ↗</a><button class="quiet-button" id="reader-close" type="button">Close</button></div></header>
+        <div class="reader-body"><h2 id="reader-title"></h2><p class="reader-meta" id="reader-meta"></p><p class="reader-status" id="reader-status" aria-live="polite"></p><div class="reader-content" id="reader-content"></div><p class="reader-citation" id="reader-citation"></p></div>
+      </div>
+    </section>
+    <section class="dialog-overlay" id="note-target-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="note-target-title"><div class="dialog-panel"><h2 id="note-target-title">Add to a note</h2><p id="note-target-description">Choose where this material should be saved.</p><select id="note-target-select" aria-label="Choose a note"></select><div class="dialog-actions"><button class="quiet-button" id="note-target-cancel" type="button">Cancel</button><button class="quiet-button" id="note-target-new" type="button">New note</button><button class="quiet-button" id="note-target-confirm" type="button">Add</button></div></div></section>
+    <section class="dialog-overlay" id="app-dialog-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="app-dialog-title"><div class="dialog-panel"><h2 id="app-dialog-title"></h2><p id="app-dialog-message"></p><input class="hidden" id="app-dialog-input" type="text" /><div class="dialog-actions"><button class="quiet-button" id="app-dialog-cancel" type="button">Cancel</button><button class="quiet-button" id="app-dialog-confirm" type="button">Continue</button></div></div></section>
+    <div class="selection-popover hidden" id="selection-popover"><button id="selection-add-button" type="button">Add selection to note</button></div>
+    <article id="print-note"></article>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <template id="fact-template"><article class="fact"><p></p><strong></strong></article></template>
+
+    <script>
+      (() => {
+        "use strict";
+        const $ = selector => document.querySelector(selector);
+        const storageKey = "shuk-notebook-v2";
+        const generalFolder = "folder-general";
+        const pageLanguages = ["en", "uk", "ru"];
+        const languageLabel = { en: "English", uk: "Українська", ru: "Русский" };
+        const state = { notes: [], folders: [], activeNoteId: null, activeFolderId: "all", filter: "", currentQuery: "", currentAnswer: "", currentResults: [], pendingNoteResults: [], currentMap: null, pool: new Map(), run: 0, preview: false, shown: 24 };
+
+        const makeId = prefix => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        function safeHref(value) {
+          try { const url = new URL(value, location.href); return ["https:", "http:"].includes(url.protocol) ? url.href : "#"; } catch { return "#"; }
+        }
+        const show = (el, visible) => el && el.classList.toggle("hidden", !visible);
+        const plain = html => (new DOMParser().parseFromString(String(html || ""), "text/html").body.textContent || "").replace(/\s+/g, " ").trim();
+        let toastTimer;
+        function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), 2400); }
+        function setBusy(busy, message = "Searching open sources…") { $("#loading-message").textContent = message; show($("#loading"), busy); }
+        function detectLanguage(query) {
+          if (/[іїєґ]/i.test(query)) return "uk";
+          if (/[а-яё]/i.test(query)) return "ru";
+          return "en";
+        }
+        async function getJson(url, timeout = 15000) {
+          const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        }
+        const wikiApi = (host, params) => `https://${host}/w/api.php?${new URLSearchParams({ origin: "*", format: "json", formatversion: "2", ...params })}`;
+        const wikiPage = (lang, title) => `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
+        async function fetchSearchSuggestion(query, lang) {
+          const data = await getJson(wikiApi(`${lang}.wikipedia.org`, {
+            action: "query", list: "search", srsearch: query, srlimit: "1", srinfo: "suggestion"
+          }));
+          const suggestion = data.query?.searchinfo?.suggestion || "";
+          return suggestion && suggestion.trim().toLocaleLowerCase() !== query.trim().toLocaleLowerCase() ? suggestion.trim() : "";
+        }
+        let appDialogResolve = null;
+        function showAppDialog({ title, message = "", confirmLabel = "Continue", inputLabel = "", inputValue = "" }) {
+          const overlay = $("#app-dialog-overlay"), input = $("#app-dialog-input");
+          $("#app-dialog-title").textContent = title;
+          $("#app-dialog-message").textContent = message;
+          $("#app-dialog-confirm").textContent = confirmLabel;
+          input.value = inputValue; input.setAttribute("aria-label", inputLabel || title); show(input, !!inputLabel);
+          overlay.classList.add("open"); overlay.setAttribute("aria-hidden", "false");
+          (inputLabel ? input : $("#app-dialog-confirm")).focus();
+          return new Promise(resolve => { appDialogResolve = resolve; });
+        }
+        function closeAppDialog(confirmed) {
+          const overlay = $("#app-dialog-overlay");
+          if (!overlay.classList.contains("open")) return;
+          const value = confirmed ? ($("#app-dialog-input").classList.contains("hidden") ? true : $("#app-dialog-input").value.trim()) : null;
+          overlay.classList.remove("open"); overlay.setAttribute("aria-hidden", "true");
+          const resolve = appDialogResolve; appDialogResolve = null; resolve?.(value);
+        }
+        function result(provider, title, url, extract = "", meta = "") {
+          const text = Array.isArray(extract) ? extract.join(" ") : extract && typeof extract === "object" ? Object.values(extract).join(" ") : String(extract || "");
+          const entry = { id: makeId("src"), provider, title: plain(title) || "Untitled source", url: safeHref(url), extract: plain(text).slice(0, 12000), meta };
+          state.pool.set(entry.id, entry);
+          return entry;
+        }
+
+        document.querySelectorAll("[data-theme-toggle]").forEach(button => button.addEventListener("click", () => {
+          const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+          document.documentElement.dataset.theme = next;
+          try { localStorage.setItem("shuk-theme", next); } catch {}
+        }));
+
+        function readStored() { try { return JSON.parse(localStorage.getItem(storageKey) || "null"); } catch { return null; } }
+        function readLegacy() { try { return JSON.parse(localStorage.getItem("shuk-notes") || "[]"); } catch { return []; } }
+        function saveState() {
+          try { localStorage.setItem(storageKey, JSON.stringify({ folders: state.folders, notes: state.notes })); }
+          catch { toast("Could not save: browser storage is full or blocked"); return false; }
+          $("#note-count").textContent = state.notes.length;
+          return true;
+        }
+        function initializeStorage() {
+          const stored = readStored();
+          state.folders = Array.isArray(stored?.folders) && stored.folders.length
+            ? stored.folders.filter(folder => folder && typeof folder.id === "string" && typeof folder.name === "string")
+            : [{ id: generalFolder, name: "General" }];
+          const base = Array.isArray(stored?.notes) ? stored.notes : (Array.isArray(readLegacy()) ? readLegacy() : []).map(old => ({
+            id: old.id || makeId("note"), title: old.title || "Untitled note", body: old.body || old.extract || "", folderId: generalFolder,
+            sources: old.searches || (old.url ? [{ query: old.query || old.title, title: old.title, extract: old.extract, url: old.url, provider: "Wikipedia" }] : []),
+            created: old.date || new Date().toISOString(), updated: old.date || new Date().toISOString()
+          }));
+          state.notes = base.filter(note => note && typeof note === "object").map(note => ({
+            id: note.id || makeId("note"), title: typeof note.title === "string" ? note.title : "Untitled note",
+            body: typeof note.body === "string" ? note.body : "", folderId: note.folderId || generalFolder,
+            tags: Array.isArray(note.tags) ? note.tags.filter(tag => typeof tag === "string") : [],
+            sources: Array.isArray(note.sources) ? note.sources.filter(source => source && typeof source === "object" && typeof source.url === "string") : [],
+            maps: Array.isArray(note.maps) ? note.maps.filter(item => item && typeof item.url === "string") : [],
+            media: Array.isArray(note.media) ? note.media.filter(item => item && typeof item.url === "string") : [],
+            created: note.created || new Date().toISOString(), updated: note.updated || note.created || new Date().toISOString()
+          }));
+          if (!state.folders.some(folder => folder.id === generalFolder)) state.folders.unshift({ id: generalFolder, name: "General" });
+          saveState();
+        }
+        const currentNote = () => state.notes.find(note => note.id === state.activeNoteId);
+
+        async function searchWikipedia(query, lang) {
+          return searchTextPages(query, lang, "wikipedia", "Wikipedia", 5);
+        }
+        async function searchWikimediaProject(query, lang, project, label) {
+          return searchTextPages(query, lang, project, label, 3);
+        }
+        async function searchTextPages(query, lang, project, label, limit) {
+          const host = `${lang}.${project}.org`;
+          const found = await getJson(wikiApi(host, { action: "query", list: "search", srsearch: query, srlimit: String(limit) }));
+          const hits = found.query?.search || [];
+          if (!hits.length) return [];
+          const pagesData = await getJson(wikiApi(host, { action: "query", prop: "extracts", titles: hits.map(item => item.title).join("|"), explaintext: "1", exchars: "1600" }));
+          const extracts = new Map(Object.values(pagesData.query?.pages || {}).map(page => [page.title.toLowerCase(), page.extract || ""]));
+          return hits.map(item => result(`${label} · ${languageLabel[lang]}`, item.title,
+            `https://${host}/wiki/${encodeURIComponent(item.title.replace(/ /g, "_"))}`, extracts.get(item.title.toLowerCase()) || plain(item.snippet), "Article introduction"));
+        }
+        async function searchWikidata(query, lang) {
+          const data = await getJson(wikiApi("www.wikidata.org", { action: "wbsearchentities", search: query, language: lang, uselang: lang, limit: "5" }));
+          return (data.search || []).map(item => result(`Wikidata · ${languageLabel[lang]}`, item.label, `https://www.wikidata.org/wiki/${item.id}`, item.description || "Structured knowledge item", item.id));
+        }
+        async function searchCommons(query) {
+          const data = await getJson(wikiApi("commons.wikimedia.org", { action: "query", generator: "search", gsrsearch: query, gsrnamespace: "6", gsrlimit: "5", prop: "imageinfo", iiprop: "url|mime|extmetadata", iiurlwidth: "480" }));
+          return Object.values(data.query?.pages || {}).map(item => {
+            const info = item.imageinfo?.[0], description = plain(info?.extmetadata?.ImageDescription?.value || "");
+            const image = result("Wikimedia Commons", item.title.replace(/^File:/, ""), info?.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, "_"))}`,
+              description || "Wikimedia Commons image", info?.mime || "Media");
+            image.kind = "image"; image.imageUrl = info?.thumburl || info?.url || "";
+            return image;
+          });
+        }
+        async function searchPlaces(query) {
+          const data = await getJson(`https://nominatim.openstreetmap.org/search?${new URLSearchParams({ q: query, format: "jsonv2", limit: "5", addressdetails: "1" })}`);
+          return data.map(item => {
+            const place = result("OpenStreetMap", item.name || item.display_name.split(",")[0],
+              `https://www.openstreetmap.org/?mlat=${item.lat}&mlon=${item.lon}#map=13/${item.lat}/${item.lon}`, item.display_name, `${item.type || item.class} · ${Number(item.lat).toFixed(4)}, ${Number(item.lon).toFixed(4)}`);
+            place.kind = "map"; place.coords = { lat: Number(item.lat), lon: Number(item.lon) };
+            return place;
+          });
+        }
+        async function searchOpenLibrary(query) {
+          const data = await getJson(`https://openlibrary.org/search.json?${new URLSearchParams({ q: query, limit: "6", fields: "title,author_name,first_publish_year,key,first_sentence" })}`);
+          return (data.docs || []).map(item => result("Open Library", item.title, `https://openlibrary.org${item.key}`,
+            (Array.isArray(item.first_sentence) ? item.first_sentence[0] : item.first_sentence?.value || item.first_sentence) || "Book record", [item.author_name?.[0], item.first_publish_year].filter(Boolean).join(" · ")));
+        }
+        async function searchCrossref(query) {
+          const data = await getJson(`https://api.crossref.org/works?${new URLSearchParams({ query, rows: "6", select: "title,author,published,DOI,URL,container-title,abstract" })}`);
+          return (data.message?.items || []).filter(item => item.title?.[0]).map(item => result("Crossref", item.title[0], item.URL || (item.DOI ? `https://doi.org/${item.DOI}` : `https://search.crossref.org/?q=${encodeURIComponent(query)}`),
+            item.abstract || item["container-title"]?.[0] || "Abstract not supplied by the publisher", [item.author?.[0]?.family, item.published?.["date-parts"]?.[0]?.[0], item["container-title"]?.[0]].filter(Boolean).join(" · ")));
+        }
+        async function searchOpenAire(query, type, label) {
+          const data = await getJson(`https://api.openaire.eu/graph/v1/researchProducts?${new URLSearchParams({ search: query, type, pageSize: "4" })}`);
+          const path = type === "dataset" ? "datasets" : type === "software" ? "software" : "publications";
+          return (data.results || []).map(item => result(`OpenAIRE · ${label}`, item.mainTitle || item.title, `https://explore.openaire.eu/search/${path}?keyword=${encodeURIComponent(query)}`,
+            item.descriptions?.[0] || item.description?.abstract || "Open research record", item.publicationDate || "Research graph"));
+        }
+        async function searchInternetArchive(query) {
+          const params = new URLSearchParams({ q: query, rows: "5", page: "1", output: "json" });
+          ["identifier", "title", "description", "date"].forEach(field => params.append("fl[]", field));
+          const data = await getJson(`https://archive.org/advancedsearch.php?${params}`);
+          return (data.response?.docs || []).map(item => result("Internet Archive", item.title, `https://archive.org/details/${encodeURIComponent(item.identifier)}`,
+            Array.isArray(item.description) ? item.description[0] : item.description, item.date?.slice(0, 4) || "Archive item"));
+        }
+        async function searchEuropePmc(query) {
+          const data = await getJson(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?${new URLSearchParams({ query, format: "json", pageSize: "5", resultType: "core" })}`);
+          return (data.resultList?.result || []).map(item => {
+            const entry = result("Europe PMC", item.title, item.pmcid ? `https://europepmc.org/articles/${item.pmcid}` : item.doi ? `https://doi.org/${item.doi}` : `https://europepmc.org/article/MED/${item.pmid}`,
+              item.abstractText || item.journalTitle || "Abstract not available", [item.authorString?.split(",")[0], item.firstPublicationDate?.slice(0, 4)].filter(Boolean).join(" · "));
+            entry.pmcid = item.pmcid || "";
+            return entry;
+          });
+        }
+        async function searchMealRecipes(query) {
+          const data = await getJson(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+          return (data.meals || []).slice(0, 5).map(item => {
+            const ingredients = Array.from({ length: 20 }, (_, i) => {
+              const ingredient = item[`strIngredient${i + 1}`]?.trim(), measure = item[`strMeasure${i + 1}`]?.trim();
+              return ingredient ? `${measure ? `${measure} ` : ""}${ingredient}` : "";
+            }).filter(Boolean).join(", ");
+            return result("TheMealDB", item.strMeal, item.strSource || `https://www.themealdb.com/meal/${item.idMeal}`,
+              `${ingredients ? `Ingredients: ${ingredients}. ` : ""}${item.strInstructions || "Recipe"}`, [item.strCategory, item.strArea].filter(Boolean).join(" · "));
+          });
+        }
+        async function searchArxiv(query) {
+          const response = await fetch(`https://export.arxiv.org/api/query?${new URLSearchParams({ search_query: `all:${query}`, start: "0", max_results: "5" })}`, { signal: AbortSignal.timeout(15000) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const xml = new DOMParser().parseFromString(await response.text(), "text/xml");
+          const text = (node, tag) => node.getElementsByTagName(tag)[0]?.textContent;
+          return [...xml.getElementsByTagName("entry")].map(item => result("arXiv", text(item, "title"), text(item, "id"), text(item, "summary"), text(item, "published")?.slice(0, 4)));
+        }
+        async function searchLibraryOfCongress(query) {
+          const data = await getJson(`https://www.loc.gov/search/?${new URLSearchParams({ fo: "json", q: query, c: "5" })}`);
+          return (data.results || []).map(item => result("Library of Congress", item.title, item.url, item.description?.[0] || item.format?.join(", ") || "Catalog record", item.date || "Library catalog"));
+        }
+        async function searchAll(query, selectedLanguage = detectLanguage(query)) {
+          const tasks = [
+            ...pageLanguages.map(code => [`Wikipedia · ${languageLabel[code]}`, () => searchWikipedia(query, code)]),
+            ...pageLanguages.map(code => [`Wikibooks · ${languageLabel[code]}`, () => searchWikimediaProject(query, code, "wikibooks", "Wikibooks")]),
+            ...pageLanguages.map(code => [`Wikisource · ${languageLabel[code]}`, () => searchWikimediaProject(query, code, "wikisource", "Wikisource")]),
+            ...pageLanguages.map(code => [`Wikidata · ${languageLabel[code]}`, () => searchWikidata(query, code)]),
+            ...["wiktionary", "wikiversity", "wikivoyage"].map(project => [`${project[0].toUpperCase()}${project.slice(1)} · ${languageLabel[selectedLanguage]}`, () => searchWikimediaProject(query, selectedLanguage, project, `${project[0].toUpperCase()}${project.slice(1)}`)]),
+            ["Wikimedia Commons", () => searchCommons(query)], ["OpenStreetMap", () => searchPlaces(query)],
+            ["Open Library", () => searchOpenLibrary(query)], ["TheMealDB", () => searchMealRecipes(query)],
+            ["Crossref", () => searchCrossref(query)],
+            ["OpenAIRE · Publications", () => searchOpenAire(query, "publication", "Publications")],
+            ["OpenAIRE · Datasets", () => searchOpenAire(query, "dataset", "Datasets")],
+            ["OpenAIRE · Software", () => searchOpenAire(query, "software", "Software")],
+            ["Internet Archive", () => searchInternetArchive(query)], ["Europe PMC", () => searchEuropePmc(query)],
+            ["arXiv", () => searchArxiv(query)], ["Library of Congress", () => searchLibraryOfCongress(query)]
+          ];
+          const responses = await Promise.all(tasks.map(async ([name, fn]) => {
+            try { return { name, items: await fn(), error: false }; } catch { return { name, items: [], error: true }; }
+          }));
+          return { items: responses.flatMap(r => r.items), responses };
+        }
+
+        async function fetchSummary(lang, title) {
+          const data = await getJson(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, "_"))}`);
+          return data?.extract && data.type !== "disambiguation" ? data : null;
+        }
+        const queryStopWords = new Set("a an and are as at be been but by can could did do does for from had has have how i in into is it its may me might must my of on or our should so than that the their them then there these they this those to was we were what when where which who why will with would you your в во и а але як хто що чому навіщо де коли для на за з по від до це у чи був була було є були який яка які".split(/\s+/));
+        function queryTerms(query) {
+          const tokens = plain(query).toLocaleLowerCase().match(/[a-z0-9а-яёіїєґ]+/gu) || [];
+          const terms = tokens.filter(word => word.length > 2 && !queryStopWords.has(word)).map(word => {
+            if (["usa", "america", "сша"].includes(word)) return "unitedstates";
+            if (word.length > 4 && word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+            if (word.length > 3 && word.endsWith("s")) return word.slice(0, -1);
+            return word;
+          });
+          return [...new Set(terms)];
+        }
+        function relevanceScore(query, item) {
+          const terms = queryTerms(query);
+          if (!terms.length) return 0;
+          const words = (plain(`${item.title} ${item.description || ""} ${item.extract}`).toLocaleLowerCase().match(/[a-z0-9а-яёіїєґ]+/gu) || []).map(word => {
+            if (["usa", "america", "сша"].includes(word)) return "unitedstates";
+            if (word.length > 4 && word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+            if (word.length > 3 && word.endsWith("s")) return word.slice(0, -1);
+            return word;
+          });
+          const matched = terms.filter(term => words.includes(term) || (term === "unitedstates" && words.includes("united")));
+          return matched.length / terms.length;
+        }
+        async function resolveArticle(query) {
+          const minimum = queryTerms(query).length > 1 ? 0.5 : 1;
+          return (await Promise.all(pageLanguages.map(async lang => {
+            try {
+              const exact = await fetchSummary(lang, query);
+              if (exact && relevanceScore(query, { title: exact.title, description: exact.description, extract: exact.extract }) >= minimum) return { lang, summary: exact };
+            } catch {}
+            try {
+              const data = await getJson(wikiApi(`${lang}.wikipedia.org`, { action: "query", list: "search", srsearch: query, srlimit: "4", srprop: "" }));
+              for (const hit of data.query?.search || []) {
+                try {
+                  const summary = await fetchSummary(lang, hit.title);
+                  if (summary && relevanceScore(query, { title: summary.title, description: summary.description, extract: summary.extract }) >= minimum) return { lang, summary };
+                } catch {}
+              }
+            } catch {}
+            return null;
+          }))).filter(Boolean);
+        }
+        const FACT_PROPS = [["P17", "Country"], ["P36", "Capital"], ["P30", "Continent"], ["P885", "Source"], ["P403", "Mouth"], ["P2043", "Length"], ["P2053", "Basin area"], ["P2046", "Area"],
+          ["P1082", "Population"], ["P2044", "Elevation"], ["P571", "Founded"], ["P569", "Born"], ["P570", "Died"], ["P106", "Occupation"], ["P27", "Citizenship"], ["P50", "Author"],
+          ["P57", "Director"], ["P577", "Released"], ["P159", "Headquarters"], ["P112", "Founder"], ["P1086", "Atomic number"]];
+        const UNITS = { Q828224: "km", Q11573: "m", Q712226: "km²", Q35852: "ha", Q25343: "m²", Q174728: "cm", Q253276: "mi", Q11574: "s" };
+        const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        function formatTime(value) {
+          const m = /^([+-])(\d+)-(\d\d)-(\d\d)/.exec(value.time || ""); if (!m) return "";
+          const year = `${Number(m[2])}${m[1] === "-" ? " BCE" : ""}`, month = Number(m[3]), day = Number(m[4]), precision = value.precision || 11;
+          if (precision <= 9 || !month) return year;
+          if (precision === 10 || !day) return `${MONTHS[month - 1]} ${year}`;
+          return `${day} ${MONTHS[month - 1]} ${year}`;
+        }
+        async function fetchPassport(qid, lang) {
+          const data = await getJson(wikiApi("www.wikidata.org", { action: "wbgetentities", ids: qid, props: "claims" }));
+          const claims = data.entities?.[qid]?.claims || {};
+          const coordValue = claims.P625?.[0]?.mainsnak?.datavalue?.value;
+          const coords = coordValue?.latitude !== undefined ? { lat: coordValue.latitude, lon: coordValue.longitude } : null;
+          const rows = [], ids = new Set();
+          for (const [prop, label] of FACT_PROPS) {
+            const values = (claims[prop] || []).slice(0, 3).map(claim => claim.mainsnak?.datavalue?.value).filter(v => v !== undefined && v !== null);
+            if (!values.length) continue;
+            rows.push({ label, values });
+            values.forEach(v => { if (v.id) ids.add(v.id); });
+          }
+          const labels = {};
+          if (ids.size) {
+            const entities = await getJson(wikiApi("www.wikidata.org", { action: "wbgetentities", ids: [...ids].join("|"), props: "labels", languages: `${lang}|en` })).catch(() => ({}));
+            Object.entries(entities.entities || {}).forEach(([id, entity]) => { labels[id] = entity.labels?.[lang]?.value || entity.labels?.en?.value || ""; });
+          }
+          const facts = rows.map(row => ({
+            label: row.label,
+            value: row.values.map(v => {
+              if (v.id) return labels[v.id];
+              if (v.amount !== undefined) return `${Number(v.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${UNITS[String(v.unit || "").split("/").pop()] || ""}`.trim();
+              if (v.time) return formatTime(v);
+              if (v.text) return v.text;
+              return typeof v === "string" ? v : "";
+            }).filter(Boolean).join(", ")
+          })).filter(row => row.value).slice(0, 8);
+          return { facts, coords };
+        }
+        const SKIP_SECTIONS = /^(notes?|references?|external links?|see also|further reading|bibliography|sources|citations|примітки|посилання|література|джерела|див\. також|примечания|ссылки|литература|источники|см\. также)$/i;
+        async function fetchSections(title, lang) {
+          const data = await getJson(wikiApi(`${lang}.wikipedia.org`, { action: "parse", page: title, prop: "sections", redirects: "1" }));
+          return (data.parse?.sections || []).filter(s => Number(s.toclevel) === 1 && /^\d+$/.test(String(s.index)) && !SKIP_SECTIONS.test(plain(s.line))).slice(0, 14);
+        }
+        async function fetchSectionText(title, lang, index) {
+          const data = await getJson(wikiApi(`${lang}.wikipedia.org`, { action: "parse", page: title, prop: "text", section: String(index), disabletoc: "1", redirects: "1" }));
+          const doc = new DOMParser().parseFromString(data.parse?.text || "", "text/html");
+          doc.querySelectorAll("style, table, sup, figure, .mw-editsection, .reference, .navbox, .thumb, .hatnote, .noprint").forEach(node => node.remove());
+          return [...doc.querySelectorAll("p, li")].map(node => node.textContent.replace(/\s+/g, " ").trim()).filter(text => text.length > 20).slice(0, 12);
+        }
+        async function fetchMedia(query) {
+          const data = await getJson(wikiApi("commons.wikimedia.org", { action: "query", generator: "search", gsrsearch: query, gsrnamespace: "6", gsrlimit: "9", prop: "imageinfo", iiprop: "url|mime|extmetadata", iiurlwidth: "360" }));
+          return Object.values(data.query?.pages || {}).map(page => ({ ...page.imageinfo?.[0], title: page.title.replace(/^File:/, "") }))
+            .filter(info => info?.thumburl && /^image\/(jpeg|png|webp|gif|svg)/.test(info.mime || "")).slice(0, 6);
+        }
+
+        let readerRun = 0, readerReturnFocus = null, readerSourceCurrent = null;
+        function renderReaderParagraphs(paragraphs) {
+          const content = $("#reader-content");
+          content.innerHTML = paragraphs.map(item => item.heading
+            ? `<h3>${esc(item.text)}</h3>`
+            : `<p>${esc(item.text)}</p>`).join("");
+        }
+        async function fetchWikiReader(source) {
+          const url = new URL(source.url), match = /^([a-z-]+)\.(wikipedia|wikibooks|wikisource|wiktionary|wikiversity|wikivoyage)\.org$/i.exec(url.hostname);
+          if (!match) return null;
+          const title = decodeURIComponent(url.pathname.replace(/^\/wiki\//, "")).replace(/_/g, " ");
+          const data = await getJson(wikiApi(url.hostname, { action: "parse", page: title, prop: "text", disabletoc: "1", redirects: "1" }));
+          const doc = new DOMParser().parseFromString(data.parse?.text || "", "text/html");
+          doc.querySelectorAll("script,style,table,sup,figure,.mw-editsection,.reference,.navbox,.thumb,.hatnote,.noprint,.metadata,.reflist").forEach(node => node.remove());
+          const chunks = [];
+          for (const node of doc.querySelectorAll("h2,h3,p,li")) {
+            const text = node.textContent.replace(/\s+/g, " ").trim();
+            if (node.matches("h2,h3")) {
+              if (/^(references|notes|external links|see also|further reading|bibliography|references|sources|примітки|посилання|література|джерела|примечания|ссылки|литература|источники)$/i.test(text)) break;
+              if (text.length > 2 && text.length < 100) chunks.push({ heading: true, text });
+            } else if (text.length > 55) chunks.push({ text });
+            if (chunks.reduce((total, part) => total + part.text.length, 0) > 150000) break;
+          }
+          return chunks;
+        }
+        async function fetchOpenLibraryReader(source) {
+          const url = new URL(source.url);
+          if (url.hostname !== "openlibrary.org" || !/^\/works\//.test(url.pathname)) return null;
+          const data = await getJson(`https://openlibrary.org${url.pathname.replace(/\/$/, "")}.json`);
+          const description = typeof data.description === "string" ? data.description : data.description?.value || "";
+          return [description, ...(data.subjects || []).slice(0, 12).map(subject => `Subject: ${subject}`)].filter(Boolean).map(text => ({ text }));
+        }
+        async function fetchEuropePmcReader(source) {
+          if (!source.pmcid) return null;
+          const response = await fetch(`https://www.ebi.ac.uk/europepmc/webservices/rest/${encodeURIComponent(source.pmcid)}/fullTextXML`, { signal: AbortSignal.timeout(18000) });
+          if (!response.ok) throw new Error(`Full text is unavailable (${response.status})`);
+          const xml = new DOMParser().parseFromString(await response.text(), "application/xml");
+          if (xml.querySelector("parsererror")) throw new Error("Could not read the full-text XML");
+          xml.querySelectorAll("table-wrap,fig,ref-list,back,ack,permissions").forEach(node => node.remove());
+          const chunks = [];
+          for (const node of xml.querySelectorAll("article-title,sec-title,p")) {
+            const text = node.textContent.replace(/\s+/g, " ").trim();
+            if (text.length < 45) continue;
+            chunks.push({ heading: node.localName === "article-title" || node.localName === "sec-title", text });
+            if (chunks.reduce((total, part) => total + part.text.length, 0) > 30000) break;
+          }
+          return chunks;
+        }
+        async function openSourceReader(source) {
+          if (!source) return;
+          const run = ++readerRun;
+          readerSourceCurrent = source;
+          readerReturnFocus = document.activeElement;
+          $("#reader-overlay").dataset.sourceId = source.id || "";
+          $("#reader-title").textContent = source.title;
+          $("#reader-provider").textContent = source.provider || "Source reader";
+          $("#reader-meta").textContent = [source.query ? `Search: ${source.query}` : "", source.meta || ""].filter(Boolean).join(" · ");
+          $("#reader-original").href = safeHref(source.url);
+          $("#reader-content").innerHTML = source.extract ? `<p>${esc(source.extract)}</p>` : "";
+          $("#reader-citation").textContent = `Source: ${source.provider || "Open source"} · ${source.title}`;
+          $("#reader-status").textContent = "Text available in Shuk";
+          $("#reader-overlay").classList.add("open"); $("#reader-overlay").setAttribute("aria-hidden", "false"); document.body.classList.add("reader-open");
+          $("#reader-close").focus();
+          try {
+            const fullText = await fetchWikiReader(source) || await fetchOpenLibraryReader(source) || await fetchEuropePmcReader(source);
+            if (run !== readerRun) return;
+            if (fullText?.length) {
+              renderReaderParagraphs(fullText);
+              $("#reader-status").textContent = source.pmcid ? "Open-access full text · Europe PMC" : "Article text · Wikimedia project";
+            } else if (!source.extract || source.extract.length < 100) {
+              $("#reader-status").textContent = "This catalog provides a record, but no substantial text through its public API.";
+              $("#reader-content").innerHTML = `<p>${esc(source.meta || "The source has no readable excerpt available here.")}</p>`;
+            }
+          } catch {
+            if (run !== readerRun) return;
+            $("#reader-status").textContent = source.extract?.length > 100
+              ? "Showing the available excerpt. The full text could not be loaded right now."
+              : "This source does not provide readable full text through its public API.";
+          }
+        }
+        function closeSourceReader() {
+          readerRun++;
+          readerSourceCurrent = null;
+          $("#reader-overlay").classList.remove("open"); $("#reader-overlay").setAttribute("aria-hidden", "true"); document.body.classList.remove("reader-open");
+          readerReturnFocus?.focus();
+        }
+
+        function sourceCard(item, { index = 0, removable = false, addToActiveNote = false } = {}) {
+          const fullText = String(item.extract || "");
+          const action = removable
+            ? `<button type="button" data-read-note-source="${index}">Read in Shuk</button><button type="button" data-remove-source="${index}">Remove</button>`
+            : item.kind === "map" || item.kind === "image"
+              ? `<button type="button" ${addToActiveNote ? `data-add-active-note="${index}"` : `data-clip="${esc(item.id)}"`}>${item.kind === "map" ? "Save map to note" : "Save photo to note"}</button>`
+            : `<button type="button" data-read-source="${esc(item.id)}">Read in Shuk</button><button type="button" ${addToActiveNote ? `data-add-active-note="${index}"` : `data-clip="${esc(item.id)}"`}>${addToActiveNote ? "Add to this note" : "+ Note"}</button>`;
+          const preview = fullText.slice(0, 440);
+          const imagePreview = item.kind === "image" && item.imageUrl ? `<img class="source-image-preview" loading="lazy" alt="${esc(item.title)}" src="${esc(safeHref(item.imageUrl))}" />` : "";
+          const reading = `${imagePreview}${fullText ? `<p>${esc(preview)}${fullText.length > preview.length ? "…" : ""}</p>` : "<p>No text excerpt is available for this record.</p>"}`;
+          return `<article class="source-result" data-source-id="${esc(item.id || "")}"><div class="source-heading"><span class="source-name">${esc(item.provider)}${item.query ? ` · ${esc(item.query)}` : ""}${item.meta ? ` · ${esc(item.meta)}` : ""}</span><h3>${esc(item.title)}</h3></div><div class="source-copy">${reading}</div><div class="card-actions"><a href="${esc(safeHref(item.url))}" target="_blank" rel="noreferrer">Original source ↗</a><span>${action}</span></div></article>`;
+        }
+        function renderList(listEl, items) {
+          listEl.innerHTML = items.map(item => `<li><a href="${esc(safeHref(item.url))}" target="_blank" rel="noreferrer">${esc(item.title)}</a><span>${esc(item.meta || item.extract.slice(0, 70))}</span></li>`).join("");
+        }
+        function setMap(coords, label) {
+          if (!coords) { state.currentMap = null; show($("#save-map-button"), false); return show($("#map-card"), false); }
+          const d = 0.06, bbox = [coords.lon - d, coords.lat - d / 2, coords.lon + d, coords.lat + d / 2].map(n => n.toFixed(5)).join(",");
+          $("#map-frame").src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${coords.lat},${coords.lon}`;
+          const url = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lon}#map=12/${coords.lat}/${coords.lon}`;
+          $("#map-link").href = url;
+          $("#map-frame").title = `Map: ${label}`;
+          state.currentMap = { kind: "map", provider: "OpenStreetMap", title: label, url, extract: `${Number(coords.lat).toFixed(5)}, ${Number(coords.lon).toFixed(5)}`, coords: { lat: Number(coords.lat), lon: Number(coords.lon) } };
+          show($("#save-map-button"), true);
+          show($("#map-card"), true);
+        }
+        function resetPanel() {
+          $("#fact-grid").innerHTML = ""; $("#article-sections").innerHTML = ""; $("#all-source-results").innerHTML = "";
+          ["#sections-wrap", "#map-card", "#media-card", "#books-card", "#research-card", "#more-row", "#lead-image", "#result-desc", "#language-choice"].forEach(id => show($(id), false));
+          show($("#read-overview-button"), false); $("#read-overview-button").removeAttribute("data-read-source");
+          show($("#query-suggestion"), false); $("#use-suggestion").textContent = "";
+          $("#map-frame").removeAttribute("src"); $("#media-strip").innerHTML = ""; state.currentMap = null; show($("#save-map-button"), false);
+        }
+        function renderAnswer(query, article, candidates = []) {
+          const summary = article?.summary;
+          const card = $("#answer-card");
+          if (summary) {
+            state.currentAnswer = summary.extract;
+            const lang = article.lang, url = summary.content_urls?.desktop?.page || wikiPage(lang, summary.title);
+            $("#result-type").textContent = "OVERVIEW";
+            $("#result-title").textContent = summary.title;
+            $("#result-summary").textContent = summary.extract;
+            $("#result-desc").textContent = summary.description || ""; show($("#result-desc"), !!summary.description);
+            const link = $("#wikipedia-link"); link.href = safeHref(url); link.firstChild.textContent = `Source attribution (${languageLabel[lang]}) `; show(link, true);
+            const img = $("#lead-image"), thumb = summary.thumbnail?.source;
+            if (thumb) {
+              const big = thumb.replace(/\/(\d+)px-/, "/640px-");
+              img.onerror = () => { img.onerror = null; img.src = thumb; };
+              img.src = big; img.alt = summary.title; show(img, true);
+            }
+            card.classList.toggle("no-image", !thumb);
+            const main = result(`Wikipedia · ${languageLabel[lang]}`, summary.title, url, summary.extract, "Overview");
+            card.dataset.sourceId = main.id;
+            $("#read-overview-button").dataset.readSource = main.id; show($("#read-overview-button"), true);
+            if (candidates.length > 1) {
+              $("#search-language").innerHTML = candidates.map(item => `<option value="${item.lang}" ${item.lang === lang ? "selected" : ""}>${languageLabel[item.lang]} · ${esc(item.summary.title)}</option>`).join("");
+              show($("#language-choice"), true);
+            }
+            return main;
+          }
+          state.currentAnswer = "";
+          $("#result-type").textContent = "SOURCE SEARCH";
+          $("#result-title").textContent = query;
+          $("#result-summary").textContent = "No single overview matched confidently. The notes below show text excerpts from sources that may help.";
+          show($("#wikipedia-link"), false); card.classList.add("no-image"); delete card.dataset.sourceId;
+          return null;
+        }
+        function renderSources() {
+          const items = state.currentResults;
+          const shown = items.slice(0, state.shown);
+          $("#all-source-results").querySelectorAll(".source-result").forEach(node => node.remove());
+          $("#all-source-results").insertAdjacentHTML("beforeend", shown.map(item => sourceCard(item)).join(""));
+          show($("#more-row"), items.length > shown.length);
+          $("#more-button").textContent = `Show all ${items.length}`;
+        }
+        async function runGlobalSearch(query, preferredLanguage = "") {
+          query = query.trim(); if (!query) return;
+          const run = ++state.run;
+          state.currentQuery = query; state.currentAnswer = ""; state.currentResults = []; state.pool.clear(); state.shown = 24;
+          $("#export-current-button").disabled = true;
+          $("#search-area").classList.add("compact");
+          show($("#results"), false); resetPanel(); setBusy(true);
+          const everything = searchAll(query);
+          const media = fetchMedia(query).catch(() => []);
+          fetchSearchSuggestion(query, detectLanguage(query)).then(suggestion => {
+            if (run !== state.run || !suggestion) return;
+            $("#use-suggestion").textContent = suggestion; show($("#query-suggestion"), true);
+          }).catch(() => {});
+          try {
+            const candidates = await resolveArticle(query).catch(() => []);
+            if (run !== state.run) return;
+            const article = candidates.find(item => item.lang === preferredLanguage) || candidates.find(item => item.lang === detectLanguage(query)) || candidates[0] || null;
+            const main = renderAnswer(query, article, candidates);
+            $("#result-label").textContent = `Results for “${query}”`;
+            show($("#results"), true); setBusy(false);
+            $("#results").scrollIntoView({ behavior: "smooth", block: "start" });
+            $("#all-source-results").innerHTML = `<p class="source-status">Loading more sources…</p>`;
+
+            if (article?.summary) {
+              const { summary, lang } = article;
+              if (summary.coordinates) setMap({ lat: summary.coordinates.lat, lon: summary.coordinates.lon }, summary.title);
+              if (summary.wikibase_item) fetchPassport(summary.wikibase_item, lang).then(({ facts, coords }) => {
+                if (run !== state.run) return;
+                const tpl = $("#fact-template");
+                $("#fact-grid").innerHTML = "";
+                facts.forEach(fact => { const node = tpl.content.cloneNode(true); node.querySelector("p").textContent = fact.label; node.querySelector("strong").textContent = fact.value; $("#fact-grid").append(node); });
+                if (!summary.coordinates && coords) setMap(coords, summary.title);
+              }).catch(() => {});
+              fetchSections(summary.title, lang).then(sections => {
+                if (run !== state.run || !sections.length) return;
+                $("#article-sections").innerHTML = sections.map(s => `<details data-index="${esc(s.index)}"><summary>${esc(plain(s.line))}</summary><div class="article-text"><p>Loading…</p></div></details>`).join("");
+                show($("#sections-wrap"), true);
+                $("#article-sections").querySelectorAll("details").forEach(details => details.addEventListener("toggle", async () => {
+                  if (!details.open || details.dataset.loaded) return;
+                  details.dataset.loaded = "1";
+                  const box = details.querySelector(".article-text"), heading = details.querySelector("summary").textContent;
+                  try {
+                    const paragraphs = await fetchSectionText(summary.title, lang, details.dataset.index);
+                    box.innerHTML = paragraphs.map(text => `<p>${esc(text)}</p>`).join("") || "<p>This section has no readable text.</p>";
+                    if (paragraphs.length) {
+                      const add = document.createElement("button"); add.type = "button"; add.className = "quiet-button"; add.textContent = "Add section to note";
+                      add.addEventListener("click", () => addToNote(result(`Wikipedia · ${languageLabel[lang]}`, `${summary.title} — ${heading}`, `${wikiPage(lang, summary.title)}#${encodeURIComponent(heading.replace(/ /g, "_"))}`, paragraphs.join(" ").slice(0, 1500), "Section")));
+                      box.append(add);
+                    }
+                  } catch { box.innerHTML = "<p>Could not load this section. Close and reopen to retry.</p>"; delete details.dataset.loaded; }
+                }));
+              }).catch(() => {});
+            }
+
+            const [all, images] = await Promise.all([everything, media]);
+            if (run !== state.run) return;
+            $("#export-current-button").disabled = false;
+            const usedUrls = new Set(main ? [main.url] : []);
+            const resultLanguage = preferredLanguage || detectLanguage(query);
+            const supporting = all.items.filter(item => {
+              const providerLanguage = item.provider.match(/ · (English|Українська|Русский)$/)?.[1];
+              if (providerLanguage && providerLanguage !== languageLabel[resultLanguage]) return false;
+              if (usedUrls.has(item.url)) return false;
+              usedUrls.add(item.url);
+              return true;
+            }).sort((a, b) => {
+              const quality = item => relevanceScore(query, item) + (item.provider.startsWith("Wikipedia") ? 0 : 0.08) + Math.min(item.extract.length, 1200) / 12000;
+              return quality(b) - quality(a);
+            });
+            state.currentResults = [...(main ? [main] : []), ...supporting];
+            if (!state.currentResults.length) {
+              $("#all-source-results").innerHTML = `<p class="source-status">No open source returned results. Check your connection or try another phrase.</p>`;
+              $("#result-label").textContent = "Nothing found";
+              return;
+            }
+            const ok = all.responses.filter(r => !r.error && r.items.length).map(r => r.name);
+            const failed = all.responses.filter(r => r.error).map(r => r.name);
+            $("#result-label").textContent = `${state.currentResults.length} results from ${ok.length} sources${failed.length ? ` · ${failed.length} unavailable` : ""}`;
+            $("#all-source-results").innerHTML = `<p class="source-status">${ok.length} sources responded${failed.length ? ` · unavailable: ${failed.map(esc).join(", ")}` : ""}</p>`;
+            renderSources();
+
+            if (images.length) {
+              $("#media-strip").innerHTML = images.map(info => {
+                const photo = result("Wikimedia Commons", info.title || "Wikimedia Commons image", info.descriptionurl || info.url,
+                  plain(info.extmetadata?.ImageDescription?.value || "") || "Wikimedia Commons image", info.mime || "Image");
+                photo.kind = "image"; photo.imageUrl = info.thumburl || info.url;
+                return `<figure><button class="media-image-trigger" type="button" data-show-photo-save="${esc(photo.id)}" aria-label="Show options for ${esc(photo.title)}"><img loading="lazy" alt="${esc(photo.title)}" src="${esc(safeHref(photo.imageUrl))}" /></button><div class="photo-actions hidden"><button class="quiet-button" type="button" data-clip="${esc(photo.id)}">Add to note</button><a href="${esc(safeHref(photo.url))}" target="_blank" rel="noreferrer">Source ↗</a></div></figure>`;
+              }).join("");
+              $("#commons-link").href = `https://commons.wikimedia.org/w/index.php?${new URLSearchParams({ search: query, ns6: "1" })}`; show($("#media-card"), true);
+            }
+            const books = all.responses.find(r => r.name === "Open Library")?.items || [];
+            if (books.length) { renderList($("#book-list"), books); $("#books-link").href = `https://openlibrary.org/search?q=${encodeURIComponent(query)}`; show($("#books-card"), true); }
+            const papers = [...(all.responses.find(r => r.name === "Crossref")?.items || []), ...(all.responses.find(r => r.name === "Europe PMC")?.items || [])].slice(0, 6);
+            if (papers.length) { renderList($("#research-list"), papers); $("#research-link").href = `https://search.crossref.org/?q=${encodeURIComponent(query)}`; }
+            $("#okm-link").href = `https://openknowledgemaps.org/?q=${encodeURIComponent(query)}`; show($("#research-card"), true);
+          } catch (error) {
+            if (run !== state.run) return;
+            $("#result-label").textContent = "Search temporarily unavailable";
+            $("#all-source-results").innerHTML = `<p class="source-status">${esc(error.message || "No open source responded. Try again in a moment.")}</p>`;
+            show($("#results"), true);
+          } finally { if (run === state.run) setBusy(false); }
+        }
+
+        function newNote(title = "Untitled note", body = "", sources = []) {
+          if (currentNote()) updateActiveNote();
+          state.preview = false;
+          const folderId = state.activeFolderId === "all" ? generalFolder : state.activeFolderId, now = new Date().toISOString();
+          const note = { id: makeId("note"), title, body, folderId, tags: [], sources: [], maps: [], media: [], created: now, updated: now };
+          sources.forEach(source => addSourceToNote(note, source));
+          state.notes.unshift(note); state.activeNoteId = note.id; saveState();
+          return note;
+        }
+        let pendingNoteAdd = null;
+        function openNoteTarget(source, quote = "") {
+          const activeNote = currentNote();
+          if (activeNote && $("#note-workspace").classList.contains("open")) {
+            updateActiveNote(); addSourceToNote(activeNote, source);
+            if (quote) activeNote.body += `${activeNote.body ? "\n\n" : ""}> ${quote.replace(/\n+/g, "\n> ")}${source ? `\n> Source: ${source.provider} — ${source.title}` : ""}`;
+            activeNote.updated = new Date().toISOString(); saveState(); renderedNoteId = null; renderWorkspace();
+            toast(quote ? "Passage added to the open note" : `Source added to “${activeNote.title}”`);
+            return;
+          }
+          pendingNoteAdd = { source, quote };
+          const select = $("#note-target-select");
+          select.innerHTML = state.notes.map(note => `<option value="${esc(note.id)}">${esc(note.title || "Untitled note")}</option>`).join("");
+          $("#note-target-title").textContent = quote ? "Save selected passage" : "Add source to a note";
+          $("#note-target-description").textContent = quote ? "The exact selected text and its source will be saved in the chosen note." : "Choose which note should keep this source.";
+          show(select, state.notes.length > 0);
+          $("#note-target-confirm").disabled = state.notes.length === 0;
+          $("#note-target-overlay").classList.add("open"); $("#note-target-overlay").setAttribute("aria-hidden", "false");
+          $("#note-target-confirm").focus();
+        }
+        function addSourceToNote(note, source) {
+          if (!source) return;
+          const saved = { ...source, query: source.query || state.currentQuery, added: new Date().toISOString() };
+          const collection = source.kind === "map" ? (note.maps ||= []) : source.kind === "image" ? (note.media ||= []) : note.sources;
+          if (!collection.some(item => item.url === source.url && item.title === source.title)) collection.push(saved);
+        }
+        function addToNote(source) { openNoteTarget(source); }
+        function renderPendingNoteResults() {
+          const items = state.pendingNoteResults;
+          $("#note-pending-results").innerHTML = items.length
+            ? `<div class="pending-tools"><span>${items.length} matching sources</span><button class="quiet-button" id="add-selected-sources" type="button">Add selected to this note</button></div><div class="pending-list">${items.map((item, index) => sourceCard(item, { index, addToActiveNote: true }).replace(`<article class="source-result" data-source-id="${esc(item.id || "")}">`, `<article class="source-result" data-source-id="${esc(item.id || "")}"><input type="checkbox" aria-label="Select ${esc(item.title)}" data-pending-index="${index}"><div class="pending-body">`).replace("</article>", "</div></article>")).join("")}</div>`
+            : "";
+        }
+        let renderedNoteId = null;
+        const noteMatches = (note, q) => `${note.title} ${note.body} ${(note.tags || []).join(" ")}`.toLowerCase().includes(q);
+        function renderLibrary() {
+          $("#workspace-folders").innerHTML = `<button type="button" class="folder-item ${state.activeFolderId === "all" ? "active" : ""}" data-folder-id="all"><span>All notes</span><span>${state.notes.length}</span></button>` +
+            state.folders.map(folder => `<button type="button" class="folder-item ${state.activeFolderId === folder.id ? "active" : ""}" data-folder-id="${esc(folder.id)}"><span>▱ ${esc(folder.name)}</span><span>${state.notes.filter(n => n.folderId === folder.id).length}</span></button>`).join("");
+          const notes = state.notes.filter(n => (state.activeFolderId === "all" || n.folderId === state.activeFolderId) && (!state.filter || noteMatches(n, state.filter)));
+          if (!notes.some(n => n.id === state.activeNoteId)) state.activeNoteId = notes[0]?.id || null;
+          $("#workspace-notes").innerHTML = notes.map(n => { const count = (n.sources?.length || 0) + (n.maps?.length || 0) + (n.media?.length || 0); return `<button class="workspace-note ${n.id === state.activeNoteId ? "active" : ""}" data-note-id="${esc(n.id)}" type="button"><strong>${esc(n.title || "Untitled note")}</strong><span>${esc(count ? `${count} saved items · ` : "")}${esc((n.body || "Empty note").replace(/\s+/g, " ").slice(0, 60))}</span></button>`; }).join("") || `<p class="notebook-hint">${state.filter ? "No matching notes." : "No notes in this folder yet."}</p>`;
+          $("#rename-folder").disabled = state.activeFolderId === "all";
+          $("#delete-folder").disabled = state.activeFolderId === "all" || state.activeFolderId === generalFolder;
+          $("#note-count").textContent = state.notes.length;
+        }
+        function renderNote(force = false) {
+          show($("#note-query-suggestion"), false);
+          const note = currentNote(), has = !!note;
+          ["#note-title-input", "#note-body-input", "#note-tags-input", "#note-folder-select", "#notebook-query", "#delete-note"].forEach(id => { $(id).disabled = !has; });
+          $("#notebook-language").disabled = !has;
+          ["#saved-research-section", "#saved-visual-section", "#continue-research-section"].forEach(id => show($(id), has));
+          $("#format-bar").querySelectorAll("button").forEach(button => { button.disabled = !has; });
+          $("#notebook-query-form").querySelector("button").disabled = !has;
+          $("#note-folder-select").innerHTML = state.folders.map(f => `<option value="${esc(f.id)}" ${note && f.id === note.folderId ? "selected" : ""}>${esc(f.name)}</option>`).join("");
+          if (force || renderedNoteId !== state.activeNoteId) {
+            $("#note-title-input").value = note?.title || ""; $("#note-body-input").value = note?.body || ""; $("#note-tags-input").value = (note?.tags || []).join(", ");
+            renderedNoteId = state.activeNoteId;
+          }
+          show($("#note-preview"), has && state.preview);
+          show($("#note-body-input"), !state.preview);
+          show($("#format-bar"), !state.preview);
+          $("#tab-preview").classList.toggle("on", state.preview);
+          $("#tab-edit").classList.toggle("on", !state.preview);
+          const savedCount = note ? note.sources.length + (note.maps || []).length + (note.media || []).length : 0;
+          $("#note-source").textContent = has ? `${savedCount} saved item${savedCount === 1 ? "" : "s"} · ${(note.body.match(/\S+/g) || []).length} words` : "Create a note, or search here to start one.";
+          $("#note-searches").innerHTML = has ? (note.sources.map((item, index) => sourceCard(item, { index, removable: true })).join("") || `<p class="notebook-hint">No text sources saved yet.</p>`) : "";
+          $("#note-visuals").innerHTML = has ? [
+            ...(note.maps || []).map((item, index) => {
+              const coords = item.coords;
+              const mapUrl = coords ? `https://www.openstreetmap.org/export/embed.html?bbox=${[coords.lon - .06, coords.lat - .03, coords.lon + .06, coords.lat + .03].map(value => value.toFixed(5)).join(",")}&layer=mapnik&marker=${coords.lat},${coords.lon}` : "";
+              return `<article class="saved-map">${mapUrl ? `<iframe title="Map: ${esc(item.title)}" loading="lazy" src="${esc(safeHref(mapUrl))}"></iframe>` : ""}<p class="saved-visual-title">${esc(item.title)}</p><div class="saved-visual-actions"><a href="${esc(safeHref(item.url))}" target="_blank" rel="noreferrer">Open map ↗</a><button class="quiet-button" type="button" data-remove-visual="map:${index}">Remove</button></div></article>`;
+            }),
+            ...(note.media || []).map((item, index) => `<article class="saved-image"><a href="${esc(safeHref(item.url))}" target="_blank" rel="noreferrer">${item.imageUrl ? `<img loading="lazy" alt="${esc(item.title)}" src="${esc(safeHref(item.imageUrl))}" />` : ""}</a><p class="saved-visual-title">${esc(item.title)}</p><div class="saved-visual-actions"><a href="${esc(safeHref(item.url))}" target="_blank" rel="noreferrer">Wikimedia source ↗</a><button class="quiet-button" type="button" data-remove-visual="media:${index}">Remove</button></div></article>`)
+          ].join("") || `<p class="notebook-hint">No maps or photos saved yet.</p>` : "";
+          renderPendingNoteResults();
+          $("#autosave-status").textContent = has ? "Saved locally" : "";
+          if (state.preview) $("#note-preview").innerHTML = renderMarkdown(note?.body || "");
+        }
+        function renderWorkspace() { renderLibrary(); renderNote(); }
+        function openWorkspace() { $("#note-workspace").classList.add("open"); document.body.classList.add("notebook-open"); $("#note-workspace").setAttribute("aria-hidden", "false"); renderedNoteId = null; renderWorkspace(); }
+        function closeWorkspace() { updateActiveNote(); $("#note-workspace").classList.remove("open"); document.body.classList.remove("notebook-open"); $("#note-workspace").setAttribute("aria-hidden", "true"); $("#notes-button").focus(); }
+        let saveTimer;
+        function updateActiveNote() {
+          clearTimeout(saveTimer);
+          const note = currentNote(); if (!note || !$("#note-workspace").classList.contains("open")) return;
+          note.title = $("#note-title-input").value.trim() || "Untitled note"; note.body = $("#note-body-input").value;
+          note.tags = $("#note-tags-input").value.split(",").map(t => t.trim().replace(/^#/, "")).filter(Boolean);
+          note.updated = new Date().toISOString(); const saved = saveState(); renderLibrary();
+          const savedCount = note.sources.length + (note.maps || []).length + (note.media || []).length;
+          $("#note-source").textContent = `${savedCount} saved item${savedCount === 1 ? "" : "s"} · ${(note.body.match(/\S+/g) || []).length} words`;
+          $("#autosave-status").textContent = saved ? "Saved" : "Not saved — export a backup";
+        }
+        function queueSave() { $("#autosave-status").textContent = "Saving…"; clearTimeout(saveTimer); saveTimer = setTimeout(updateActiveNote, 350); }
+
+        function inlineMd(text) {
+          return esc(text).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+            .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (m, label, url) => `<a href="${url}" target="_blank" rel="noreferrer">${label}</a>`)
+            .replace(/\[\[([^\]]+)\]\]/g, (m, title) => `<a href="#" data-wikilink="${title}">${title}</a>`);
+        }
+        function renderMarkdown(source) {
+          const out = []; let list = null, quote = false, code = false;
+          const close = () => { if (list) { out.push(`</${list.replace(/ .*/, "")}>`); list = null; } if (quote) { out.push("</blockquote>"); quote = false; } };
+          for (const raw of String(source).split("\n")) {
+            if (raw.startsWith("```")) { close(); out.push(code ? "</pre>" : "<pre>"); code = !code; continue; }
+            if (code) { out.push(`${esc(raw)}\n`); continue; }
+            let m;
+            if ((m = raw.match(/^(#{1,3})\s+(.*)/))) { close(); out.push(`<h${m[1].length}>${inlineMd(m[2])}</h${m[1].length}>`); }
+            else if ((m = raw.match(/^\s*[-*]\s+\[( |x)\]\s+(.*)/i))) { if (list !== 'ul class="todo"') { close(); out.push('<ul class="todo">'); list = 'ul class="todo"'; } out.push(`<li><input type="checkbox" disabled ${m[1] !== " " ? "checked" : ""}>${inlineMd(m[2])}</li>`); }
+            else if ((m = raw.match(/^\s*[-*]\s+(.*)/))) { if (list !== "ul") { close(); out.push("<ul>"); list = "ul"; } out.push(`<li>${inlineMd(m[1])}</li>`); }
+            else if ((m = raw.match(/^\s*\d+\.\s+(.*)/))) { if (list !== "ol") { close(); out.push("<ol>"); list = "ol"; } out.push(`<li>${inlineMd(m[1])}</li>`); }
+            else if ((m = raw.match(/^>\s?(.*)/))) { if (!quote) { close(); out.push("<blockquote>"); quote = true; } out.push(`<p>${inlineMd(m[1])}</p>`); }
+            else if (/^---+$/.test(raw.trim())) { close(); out.push("<hr>"); }
+            else if (!raw.trim()) close();
+            else { close(); out.push(`<p>${inlineMd(raw)}</p>`); }
+          }
+          close(); return out.join("");
+        }
+        async function applyFormat(kind) {
+          const area = $("#note-body-input"), a = area.selectionStart, b = area.selectionEnd, selected = area.value.slice(a, b);
+          const wrap = (left, right = left, placeholder = "text") => area.setRangeText(left + (selected || placeholder) + right, a, b, "end");
+          const prefix = text => { const start = area.value.lastIndexOf("\n", a - 1) + 1; area.setRangeText(text, start, start, "end"); };
+          const actions = {
+            h1: () => prefix("# "), h2: () => prefix("## "), bold: () => wrap("**"), italic: () => wrap("*"), ul: () => prefix("- "), todo: () => prefix("- [ ] "), quote: () => prefix("> "), code: () => wrap("`"),
+            link: async () => { const url = await showAppDialog({ title: "Add a link", message: "Enter the web address for this link.", inputLabel: "Link URL", inputValue: "https://", confirmLabel: "Add link" }); if (url) wrap("[", `](${url})`, "link text"); }, wiki: () => wrap("[[", "]]", "Note title")
+          };
+          await actions[kind]?.(); area.focus(); queueSave();
+        }
+        function setPreview(on) {
+          state.preview = on;
+          show($("#note-preview"), on); show($("#note-body-input"), !on); show($("#format-bar"), !on);
+          $("#tab-preview").classList.toggle("on", on); $("#tab-edit").classList.toggle("on", !on);
+          if (on) { updateActiveNote(); $("#note-preview").innerHTML = renderMarkdown(currentNote()?.body || ""); }
+        }
+
+        /* xport */
+        const fileName = note => (note.title.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "shuk-note");
+        function downloadBlob(filename, data, type) {
+          const link = document.createElement("a"), url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type: `${type};charset=utf-8` }));
+          link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+        const noteVisualMarkdown = note => {
+          const items = [...(note.maps || []).map(item => `- Map: [${item.title}](${item.url})${item.coords ? ` (${item.coords.lat}, ${item.coords.lon})` : ""}`), ...(note.media || []).map(item => `${item.imageUrl ? `![${item.title}](${item.imageUrl})\n` : ""}- Image: [${item.title}](${item.url})`)];
+          return items.length ? `## Maps & images\n\n${items.join("\n\n")}\n` : "";
+        };
+        const noteVisualText = note => {
+          const items = [
+            ...(note.maps || []).map(item => `Map: ${item.title}${item.coords ? ` (${item.coords.lat}, ${item.coords.lon})` : ""}\n${item.url}`),
+            ...(note.media || []).map(item => `Image: ${item.title}\nWikimedia source: ${item.url}${item.imageUrl ? `\nImage: ${item.imageUrl}` : ""}`)
+          ];
+          return items.length ? `\n\nMAPS & IMAGES\n\n${items.join("\n\n")}` : "";
+        };
+        const noteMarkdown = note => `# ${note.title}\n\n${note.tags?.length ? `${note.tags.map(t => `#${t}`).join(" ")}\n\n` : ""}${note.body || ""}\n\n${note.sources.length ? `## Sources\n\n${note.sources.map((s, i) => `${i + 1}. **${s.title}** (${s.provider})${s.extract ? `\n   ${s.extract.slice(0, 300).replace(/\n/g, " ")}` : ""}\n   <${s.url}>`).join("\n")}\n` : ""}${noteVisualMarkdown(note)}`;
+        const noteText = note => `${note.title}\n${"=".repeat(Math.min(note.title.length, 60))}\n\n${note.tags?.length ? `Tags: ${note.tags.join(", ")}\n\n` : ""}${note.body || ""}${note.sources.length ? `\n\nRESEARCH NOTES\n\n${note.sources.map((s, i) => `${i + 1}. ${s.query ? `Search: ${s.query}\n` : ""}${s.title}\n${s.provider}${s.meta ? ` · ${s.meta}` : ""}${s.extract ? `\n\n${s.extract}` : "\n\nNo text excerpt was provided by this source."}\n\nReference: ${s.url}`).join("\n\n")}` : ""}${noteVisualText(note)}`;
+        function compactExcerpt(text, maxLength = 520) {
+          const source = plain(text).replace(/\s+/g, " ").trim();
+          if (source.length <= maxLength) return source;
+          const sentences = source.match(/[^.!?]+(?:[.!?]+|$)/gu) || [source];
+          const short = [];
+          for (const sentence of sentences) {
+            const candidate = [...short, sentence.trim()].filter(Boolean).join(" ");
+            if (candidate.length > maxLength) break;
+            short.push(sentence.trim());
+            if (short.length === 2) break;
+          }
+          return (short.join(" ") || source.slice(0, maxLength).replace(/\s+\S*$/, "").trim()) + (source.length > maxLength ? "…" : "");
+        }
+        async function currentSearchArticle() {
+          const title = $("#result-title").textContent || state.currentQuery;
+          const articleSource = state.currentResults.find(item => item.provider.startsWith("Wikipedia") && item.title === title)
+            || state.currentResults.find(item => item.provider.startsWith("Wikipedia"));
+          let article = [];
+          if (articleSource) article = await fetchWikiReader(articleSource).catch(() => []) || [];
+          const lines = [`# ${title}`, `Search: ${state.currentQuery}`, ""];
+          if (article.length) {
+            for (const part of article) lines.push(part.heading ? `\n## ${part.text}\n` : part.text, "");
+            lines.push(`Source: ${articleSource.url}`);
+          } else {
+            const contentSources = state.currentResults.filter(item => item.extract?.length > 100 &&
+              !/open image, diagram, or media file|structured knowledge item|catalog record|archive item|abstract not available|record not available/i.test(item.extract));
+            lines.push(state.currentAnswer || "No readable article text was available for this search.");
+            contentSources.filter(item => item !== articleSource).slice(0, 8).forEach(item => {
+              lines.push("", `## ${item.title}`, `Source: ${item.provider}`, "", item.extract, "", item.url);
+            });
+            if (articleSource?.url) lines.push("", `Source: ${articleSource.url}`);
+          }
+          return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+        }
+        const noteHtml = note => `<h1>${esc(note.title)}</h1>${renderMarkdown(note.body || "")}${note.sources.length ? `<h2>Sources</h2>${note.sources.map(s => `<section class="print-source"><strong>${esc(s.title)}</strong> <small>(${esc(s.provider)})</small><p>${esc(s.extract || "")}</p><a href="${esc(safeHref(s.url))}">${esc(s.url)}</a></section>`).join("")}` : ""}${note.maps?.length || note.media?.length ? `<h2>Maps &amp; images</h2>${(note.maps || []).map(item => `<section class="print-source"><strong>${esc(item.title)}</strong><p>${esc(item.extract || "")}</p><a href="${esc(safeHref(item.url))}">${esc(item.url)}</a>${item.coords ? `<iframe title="Map: ${esc(item.title)}" src="${esc(safeHref(`https://www.openstreetmap.org/export/embed.html?bbox=${[item.coords.lon - .06, item.coords.lat - .03, item.coords.lon + .06, item.coords.lat + .03].map(value => value.toFixed(5)).join(",")}&layer=mapnik&marker=${item.coords.lat},${item.coords.lon}`))}" style="display:block;width:100%;height:260px;border:0"></iframe>` : ""}</section>`).join("")}${(note.media || []).map(item => `<section class="print-source"><strong>${esc(item.title)}</strong>${item.imageUrl ? `<p><img src="${esc(safeHref(item.imageUrl))}" alt="${esc(item.title)}" style="max-width:100%;max-height:420px"></p>` : ""}<a href="${esc(safeHref(item.url))}">Wikimedia source ↗</a></section>`).join("")}` : ""}`;
+        const htmlPage = (note, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(note.title)}</title><style>body{font:16px/1.65 Georgia,serif;max-width:760px;margin:40px auto;padding:0 20px;color:#20211f}blockquote{border-left:3px solid #126b4e;margin:1em 0;padding-left:14px;color:#555}a{color:#126b4e}.print-source{border-top:1px solid #ddd;padding:8px 0}</style></head><body>${body}</body></html>`;
+
+        /* Minimal real .docx writer (OOXML in an uncompressed ZIP) — no libraries needed. */
+        const crcTable = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+        const crc32 = bytes => { let c = 0xFFFFFFFF; for (const b of bytes) c = crcTable[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+        function zipStore(files) {
+          const enc = new TextEncoder(), chunks = [], central = []; let offset = 0;
+          const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+          for (const [name, text] of files) {
+            const nameBytes = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+            const common = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameBytes.length), ...u16(0)];
+            chunks.push(new Uint8Array([0x50, 0x4b, 3, 4, ...common]), nameBytes, data);
+            central.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...common, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset)]), nameBytes);
+            offset += 30 + nameBytes.length + data.length;
+          }
+          const centralSize = central.reduce((n, c) => n + c.length, 0), count = files.length;
+          return new Blob([...chunks, ...central, new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(count), ...u16(count), ...u32(centralSize), ...u32(offset), 0, 0])], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        }
+        function buildDocx(note) {
+          const x = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+          const rels = []; const addRel = url => { rels.push(url); return `rId${rels.length + 10}`; };
+          const run = (text, o = {}) => `<w:r><w:rPr>${o.b ? "<w:b/>" : ""}${o.i ? "<w:i/>" : ""}${o.mono ? '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>' : ""}${o.color ? `<w:color w:val="${o.color}"/>` : ""}${o.u ? '<w:u w:val="single"/>' : ""}${o.sz ? `<w:sz w:val="${o.sz}"/>` : ""}</w:rPr><w:t xml:space="preserve">${x(text)}</w:t></w:r>`;
+          const inlineRuns = (text, base = {}) => text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|\[[^\]]+\]\(https?:[^)\s]+\))/).filter(Boolean).map(part => {
+            let m;
+            if ((m = part.match(/^\*\*([^*]+)\*\*$/))) return run(m[1], { ...base, b: true });
+            if ((m = part.match(/^\*([^*\n]+)\*$/))) return run(m[1], { ...base, i: true });
+            if ((m = part.match(/^`([^`]+)`$/))) return run(m[1], { ...base, mono: true });
+            if ((m = part.match(/^\[([^\]]+)\]\((https?:[^)\s]+)\)$/))) return `<w:hyperlink r:id="${addRel(m[2])}">${run(m[1], { ...base, color: "126B4E", u: true })}</w:hyperlink>`;
+            return run(part.replace(/\[\[([^\]]+)\]\]/g, "$1"), base);
+          }).join("");
+          const para = (inner, { ind = 0, after = 120, before = 0, border = false } = {}) => `<w:p><w:pPr>${border ? '<w:pBdr><w:left w:val="single" w:sz="18" w:space="8" w:color="126B4E"/></w:pBdr>' : ""}<w:spacing w:before="${before}" w:after="${after}"/><w:ind w:left="${ind}"/></w:pPr>${inner}</w:p>`;
+          const body = [para(run(note.title, { b: true, sz: 44 }), { after: 160 })];
+          if (note.tags?.length) body.push(para(run(note.tags.map(t => `#${t}`).join("  "), { color: "126B4E" })));
+          let inCode = false;
+          for (const raw of (note.body || "").split("\n")) {
+            if (raw.startsWith("```")) { inCode = !inCode; continue; }
+            let m;
+            if (inCode) body.push(para(run(raw || " ", { mono: true }), { ind: 360, after: 0 }));
+            else if ((m = raw.match(/^(#{1,3})\s+(.*)/))) body.push(para(inlineRuns(m[2], { b: true, sz: [36, 30, 26][m[1].length - 1] }), { before: 200, after: 100 }));
+            else if ((m = raw.match(/^\s*[-*]\s+\[( |x)\]\s+(.*)/i))) body.push(para(run(m[1] === " " ? "☐ " : "☑ ") + inlineRuns(m[2]), { ind: 360, after: 60 }));
+            else if ((m = raw.match(/^\s*[-*]\s+(.*)/))) body.push(para(run("•  ") + inlineRuns(m[1]), { ind: 360, after: 60 }));
+            else if ((m = raw.match(/^\s*(\d+)\.\s+(.*)/))) body.push(para(run(`${m[1]}.  `) + inlineRuns(m[2]), { ind: 360, after: 60 }));
+            else if ((m = raw.match(/^>\s?(.*)/))) body.push(para(inlineRuns(m[1], { i: true, color: "555555" }), { ind: 360, border: true, after: 60 }));
+            else if (raw.trim()) body.push(para(inlineRuns(raw)));
+          }
+          if (note.sources.length) {
+            body.push(para(run("Sources", { b: true, sz: 32 }), { before: 300, after: 100 }));
+            note.sources.forEach((s, i) => {
+              body.push(para(run(`${i + 1}. ${s.title} `, { b: true }) + run(`(${s.provider})`, { color: "666666" }), { after: 20 }));
+              if (s.extract) body.push(para(run(s.extract.slice(0, 400)), { ind: 360, after: 20 }));
+              body.push(para(`<w:hyperlink r:id="${addRel(s.url)}">${run(s.url, { color: "126B4E", u: true })}</w:hyperlink>`, { ind: 360, after: 140 }));
+            });
+          }
+          const visualSources = [...(note.maps || []).map(item => ({ ...item, label: `Map: ${item.title}` })), ...(note.media || []).map(item => ({ ...item, label: `Image: ${item.title}` }))];
+          if (visualSources.length) {
+            body.push(para(run("Maps & images", { b: true, sz: 32 }), { before: 300, after: 100 }));
+            visualSources.forEach(item => {
+              body.push(para(run(item.label, { b: true }), { after: 20 }));
+              if (item.extract) body.push(para(run(item.extract), { ind: 360, after: 20 }));
+              body.push(para(`<w:hyperlink r:id="${addRel(item.url)}">${run(item.url, { color: "126B4E", u: true })}</w:hyperlink>`, { ind: 360, after: 140 }));
+              if (item.imageUrl) body.push(para(`<w:hyperlink r:id="${addRel(item.imageUrl)}">${run("View image", { color: "126B4E", u: true })}</w:hyperlink>`, { ind: 360, after: 140 }));
+            });
+          }
+          const ns = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+          const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+          return zipStore([
+            ["[Content_Types].xml", `${head}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`],
+            ["_rels/.rels", `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`],
+            ["word/_rels/document.xml.rels", `${head}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${rels.map((url, i) => `<Relationship Id="rId${i + 11}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${x(url)}" TargetMode="External"/>`).join("")}</Relationships>`],
+            ["word/styles.xml", `${head}<w:styles ${ns}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri" w:eastAsia="Calibri"/><w:sz w:val="22"/><w:lang w:val="en-US"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`],
+            ["word/document.xml", `${head}<w:document ${ns}><w:body>${body.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1304" w:bottom="1440" w:left="1304" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`]
+          ]);
+        }
+        function exportNote(kind) {
+          updateActiveNote();
+          if (kind === "all-md") return downloadBlob("shuk-notes.md", state.notes.map(noteMarkdown).join("\n\n---\n\n"), "text/markdown");
+          if (kind === "json") return downloadBlob("shuk-backup.json", JSON.stringify({ folders: state.folders, notes: state.notes }, null, 2), "application/json");
+          const note = currentNote(); if (!note) return toast("Select or create a note first");
+          if (kind === "md") downloadBlob(`${fileName(note)}.md`, noteMarkdown(note), "text/markdown");
+          if (kind === "txt") downloadBlob(`${fileName(note)}.txt`, noteText(note), "text/plain");
+          if (kind === "html") downloadBlob(`${fileName(note)}.html`, htmlPage(note, noteHtml(note)), "text/html");
+          if (kind === "docx") downloadBlob(`${fileName(note)}.docx`, buildDocx(note));
+          if (kind === "pdf") { $("#print-note").innerHTML = noteHtml(note); const old = document.title; document.title = note.title; window.print(); document.title = old; }
+        }
+
+        const placeholderExamples = ["Kyiv", "東京", "القاهرة", "Bogotá", "Reykjavík", "Nairobi", "서울", "Lisboa", "मुंबई", "Praha", "Ursula Le Guin", "Jorge Luis Borges", "Toni Morrison", "Chimamanda Adichie", "村上春樹", "Björk", "Stromae", "Rosalía", "Fela Kuti", "Ado", "борщ", "paella", "khachapuri", "jollof", "라면"];
+        for (let i = placeholderExamples.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [placeholderExamples[i], placeholderExamples[j]] = [placeholderExamples[j], placeholderExamples[i]]; }
+        let placeholderIndex = 0, charIndex = 0, removing = false;
+        function animatePlaceholder() {
+          const input = $("#search-input");
+          if (document.activeElement === input || input.value || document.hidden) return setTimeout(animatePlaceholder, 600);
+          const phrase = placeholderExamples[placeholderIndex];
+          input.placeholder = phrase.slice(0, charIndex);
+          charIndex += removing ? -1 : 1;
+          if (!removing && charIndex > phrase.length) { removing = true; return setTimeout(animatePlaceholder, 1200); }
+          if (removing && charIndex < 0) { removing = false; charIndex = 0; placeholderIndex = (placeholderIndex + 1) % placeholderExamples.length; }
+          setTimeout(animatePlaceholder, removing ? 30 : 65);
+        }
+
+        $("#search-form").addEventListener("submit", event => { event.preventDefault(); runGlobalSearch($("#search-input").value); });
+        $("#use-suggestion").addEventListener("click", () => {
+          const suggestion = $("#use-suggestion").textContent.trim();
+          if (!suggestion) return;
+          $("#search-input").value = suggestion; runGlobalSearch(suggestion, $("#search-language").value);
+        });
+        $("#use-note-suggestion").addEventListener("click", () => {
+          const suggestion = $("#use-note-suggestion").textContent.trim();
+          if (!suggestion) return;
+          $("#notebook-query").value = suggestion; $("#notebook-query-form").requestSubmit();
+        });
+        $("#search-language").addEventListener("change", event => runGlobalSearch(state.currentQuery, event.target.value));
+        $("#translate-toggle").addEventListener("click", () => { const panel = $("#translate-panel"); panel.classList.toggle("open"); if (panel.classList.contains("open")) { $("#translate-from").value = "auto"; $("#translate-output").textContent = "Translate the current query into another language."; $("#search-input").focus(); } });
+        $("#translate-submit").addEventListener("click", async () => {
+          const text = $("#search-input").value.trim(); if (!text) return toast("Enter a query to translate first");
+          const button = $("#translate-submit"), output = $("#translate-output"); button.disabled = true; output.textContent = "Translating…"; $("#use-translation").disabled = true;
+          try {
+            let from = $("#translate-from").value;
+            if (from === "auto") from = /[іїєґ]/i.test(text) ? "uk" : /[а-яё]/i.test(text) ? "ru" : "en";
+            const params = new URLSearchParams({ q: text, langpair: `${from}|${$("#translate-to").value}` });
+            const response = await fetch(`https://api.mymemory.translated.net/get?${params}`, { signal: AbortSignal.timeout(15000) });
+            if (!response.ok) throw new Error("Translation service is unavailable");
+            const data = await response.json(), translated = data.responseData?.translatedText;
+            if (!translated || Number(data.responseStatus) >= 400) throw new Error(data.responseDetails || "No translation was returned");
+            output.textContent = translated; $("#use-translation").dataset.translation = translated; $("#use-translation").disabled = false;
+          } catch (error) { output.textContent = error.message || "Could not translate this query right now."; }
+          finally { button.disabled = false; }
+        });
+        $("#use-translation").addEventListener("click", () => { $("#search-input").value = $("#use-translation").dataset.translation || ""; $("#search-input").focus(); });
+        $("#brand").addEventListener("click", event => { event.preventDefault(); state.run++; show($("#results"), false); setBusy(false); $("#search-area").classList.remove("compact"); $("#search-input").value = ""; window.scrollTo({ top: 0, behavior: "smooth" }); });
+        $("#notes-button").addEventListener("click", openWorkspace);
+        $("#close-workspace").addEventListener("click", closeWorkspace);
+        $("#new-note").addEventListener("click", () => { newNote(); renderedNoteId = null; renderWorkspace(); $("#note-title-input").focus(); $("#note-title-input").select(); });
+        $("#new-note-sidebar").addEventListener("click", () => $("#new-note").click());
+        $("#more-button").addEventListener("click", () => { state.shown = Infinity; renderSources(); });
+        $("#save-map-button").addEventListener("click", () => { if (state.currentMap) openNoteTarget({ ...state.currentMap }); });
+        document.addEventListener("click", event => {
+          const photoTrigger = event.target.closest("[data-show-photo-save]");
+          if (photoTrigger) {
+            $("#media-strip").querySelectorAll(".photo-actions").forEach(actions => show(actions, false));
+            show(photoTrigger.closest("figure")?.querySelector(".photo-actions"), true);
+            return;
+          }
+          if (!event.target.closest("#media-strip")) $("#media-strip").querySelectorAll(".photo-actions").forEach(actions => show(actions, false));
+          const directAdd = event.target.closest("[data-add-active-note]");
+          if (directAdd) {
+            const note = currentNote(), source = state.pendingNoteResults[Number(directAdd.dataset.addActiveNote)];
+            if (!note || !source) return;
+            updateActiveNote(); addSourceToNote(note, source); state.pendingNoteResults.splice(Number(directAdd.dataset.addActiveNote), 1); saveState(); renderWorkspace();
+            toast(`Added to “${note.title}”`); return;
+          }
+          const clip = event.target.closest("[data-clip]");
+          if (clip) { const source = state.pool.get(clip.dataset.clip); if (source) openNoteTarget(source); }
+          const read = event.target.closest("[data-read-source]");
+          if (read) { const source = state.pool.get(read.dataset.readSource); if (source) openSourceReader(source); }
+          const readNote = event.target.closest("[data-read-note-source]");
+          if (readNote) { const source = currentNote()?.sources[Number(readNote.dataset.readNoteSource)]; if (source) openSourceReader(source); }
+        });
+        $("#reader-close").addEventListener("click", closeSourceReader);
+        $("#reader-overlay").addEventListener("click", event => { if (event.target === $("#reader-overlay")) closeSourceReader(); });
+
+        const folderForm = $("#folder-form");
+        $("#create-folder").addEventListener("click", () => { delete folderForm.dataset.renameId; folderForm.reset(); $("#folder-submit").textContent = "Create"; show(folderForm, true); $("#folder-name-input").focus(); });
+        $("#cancel-folder").addEventListener("click", () => { delete folderForm.dataset.renameId; folderForm.reset(); show(folderForm, false); });
+        $("#rename-folder").addEventListener("click", () => {
+          const folder = state.folders.find(f => f.id === state.activeFolderId); if (!folder) return;
+          show(folderForm, true); $("#folder-name-input").value = folder.name; folderForm.dataset.renameId = folder.id; $("#folder-submit").textContent = "Save"; $("#folder-name-input").focus();
+        });
+        folderForm.addEventListener("submit", event => {
+          event.preventDefault(); const name = $("#folder-name-input").value.trim(); if (!name) return;
+          updateActiveNote();
+          const renameId = folderForm.dataset.renameId;
+          if (renameId) { state.folders = state.folders.map(f => f.id === renameId ? { ...f, name } : f); delete folderForm.dataset.renameId; }
+          else state.folders.push({ id: makeId("folder"), name });
+          state.activeFolderId = renameId || state.folders.at(-1).id; folderForm.reset(); show(folderForm, false); saveState(); renderWorkspace();
+        });
+        $("#delete-folder").addEventListener("click", async () => {
+          const folder = state.folders.find(f => f.id === state.activeFolderId); if (!folder || folder.id === generalFolder) return;
+          if (!await showAppDialog({ title: "Delete folder?", message: `“${folder.name}” will be removed. Its notes will move to General.`, confirmLabel: "Delete" })) return;
+          updateActiveNote();
+          state.notes.forEach(n => { if (n.folderId === folder.id) n.folderId = generalFolder; });
+          state.folders = state.folders.filter(f => f.id !== folder.id); state.activeFolderId = "all"; saveState(); renderWorkspace();
+        });
+        $("#workspace-folders").addEventListener("click", event => {
+          const id = event.target.closest("[data-folder-id]")?.dataset.folderId; if (!id) return;
+          updateActiveNote(); state.activeFolderId = id; state.activeNoteId = null; renderWorkspace();
+        });
+        $("#workspace-notes").addEventListener("click", event => {
+          const id = event.target.closest("[data-note-id]")?.dataset.noteId; if (!id) return;
+          updateActiveNote(); state.activeNoteId = id; state.pendingNoteResults = []; renderWorkspace(); if (state.preview) setPreview(true);
+        });
+        $("#note-filter").addEventListener("input", event => { updateActiveNote(); state.filter = event.target.value.trim().toLowerCase(); renderLibrary(); renderNote(); });
+        ["#note-title-input", "#note-body-input", "#note-tags-input"].forEach(id => $(id).addEventListener("input", queueSave));
+        $("#note-folder-select").addEventListener("change", event => { const note = currentNote(); if (!note) return; updateActiveNote(); note.folderId = event.target.value; state.activeFolderId = note.folderId; saveState(); renderWorkspace(); });
+        $("#delete-note").addEventListener("click", async () => {
+          const note = currentNote(); if (!note || !await showAppDialog({ title: "Delete note?", message: `“${note.title}” will be permanently removed.`, confirmLabel: "Delete" })) return;
+          state.notes = state.notes.filter(n => n.id !== note.id); state.activeNoteId = null; saveState(); renderedNoteId = null; renderWorkspace();
+        });
+        $("#format-bar").addEventListener("click", event => { const kind = event.target.closest("[data-fmt]")?.dataset.fmt; if (kind) applyFormat(kind); });
+        $("#note-body-input").addEventListener("keydown", event => {
+          if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return;
+          const kind = { b: "bold", i: "italic", k: "link" }[event.key.toLowerCase()]; if (kind) { event.preventDefault(); applyFormat(kind); }
+        });
+        $("#tab-edit").addEventListener("click", () => setPreview(false));
+        $("#tab-preview").addEventListener("click", () => setPreview(true));
+        $("#note-preview").addEventListener("click", async event => {
+          const link = event.target.closest("[data-wikilink]"); if (!link) return; event.preventDefault();
+          const target = state.notes.find(n => n.title.toLowerCase() === link.dataset.wikilink.toLowerCase());
+          if (target) { state.activeFolderId = "all"; state.activeNoteId = target.id; renderWorkspace(); setPreview(true); }
+          else if (await showAppDialog({ title: "Create linked note?", message: `There is no note called “${link.dataset.wikilink}” yet.`, confirmLabel: "Create" })) { newNote(link.dataset.wikilink); renderedNoteId = null; renderWorkspace(); setPreview(false); }
+        });
+        $("#notebook-query-form").addEventListener("submit", async event => {
+          event.preventDefault(); const query = $("#notebook-query").value.trim(); const note = currentNote(); if (!query || !note) return;
+          const languageSelect = $("#notebook-language");
+          if (!languageSelect.dataset.userChoice) languageSelect.value = detectLanguage(query);
+          const selectedLanguage = languageSelect.value || detectLanguage(query);
+          show($("#note-query-suggestion"), false);
+          const id = note.id; $("#autosave-status").textContent = `Searching sources for “${query}”…`;
+          const submit = $("#notebook-query-form").querySelector("button"); submit.disabled = true;
+          try {
+            const [found, suggestion] = await Promise.all([searchAll(query, selectedLanguage), fetchSearchSuggestion(query, selectedLanguage).catch(() => "")]);
+            const target = state.notes.find(n => n.id === id); if (!target) return;
+            if (suggestion) { $("#use-note-suggestion").textContent = suggestion; show($("#note-query-suggestion"), true); }
+          const have = new Set([...target.sources, ...(target.maps || []), ...(target.media || [])].map(s => `${s.url}|${s.query}`));
+            const primaryLanguage = languageLabel[selectedLanguage];
+            const useful = found.items.filter(item => {
+              const localized = item.provider.match(/ · (English|Українська|Русский)$/)?.[1];
+              if (localized && localized !== primaryLanguage) return false;
+              if (item.kind === "map" || item.kind === "image") return relevanceScore(query, item) > 0;
+              const provider = item.provider.split(" · ")[0];
+              const minimumLength = ["Wikipedia", "Wiktionary"].includes(provider) ? 70 : 120;
+              return (item.kind === "map" || item.kind === "image" || item.extract.length >= minimumLength) && relevanceScore(query, item) > 0 &&
+                !/open image, diagram, or media file|structured knowledge item|catalog record|abstract not available|record not available/i.test(item.extract);
+            });
+            const sourcePriority = item => ({ Wikipedia: 80, Wiktionary: 70, Wikiversity: 62, Wikibooks: 58, Wikivoyage: 52, Wikisource: 48, "TheMealDB": 44, "Open Library": 40, "Internet Archive": 34, "Library of Congress": 28 })[item.provider.split(" · ")[0]] || 0;
+            useful.sort((a, b) => (relevanceScore(query, b) * 100 + sourcePriority(b) + Math.min(b.extract.length, 2500) / 100) - (relevanceScore(query, a) * 100 + sourcePriority(a) + Math.min(a.extract.length, 2500) / 100));
+            const selected = [], perProvider = new Map();
+            for (const item of useful) {
+              const provider = item.provider.split(" · ")[0], count = perProvider.get(provider) || 0;
+              const cap = provider === "Wikipedia" ? 5 : ["Wiktionary", "Wikiversity", "Wikibooks", "Wikivoyage", "Wikisource"].includes(provider) ? 3 : 2;
+              if (count >= cap || have.has(`${item.url}|${query}`)) continue;
+              selected.push({ ...item, query, added: new Date().toISOString() }); perProvider.set(provider, count + 1);
+              if (selected.length >= 30) break;
+            }
+          if (selected.length) {
+              state.pendingNoteResults = selected; renderPendingNoteResults(); $("#notebook-query").value = "";
+              toast(`Found ${selected.length} items — choose what to keep`);
+            } else { $("#note-pending-results").innerHTML = `<p class="notebook-hint">No useful text, map, or image results came back for this search.</p>`; toast("No useful results came back for this search"); }
+          } catch { $("#autosave-status").textContent = "Sources could not be loaded. Try again in a moment."; }
+          finally { submit.disabled = !currentNote(); }
+        });
+        $("#notebook-language").addEventListener("change", event => { event.target.dataset.userChoice = "true"; });
+        $("#note-searches").addEventListener("click", event => {
+          const note = currentNote(); if (!note) return;
+          const remove = event.target.closest("[data-remove-source]");
+          if (remove) { note.sources.splice(Number(remove.dataset.removeSource), 1); saveState(); renderWorkspace(); }
+        });
+        $("#note-visuals").addEventListener("click", event => {
+          const remove = event.target.closest("[data-remove-visual]"); if (!remove) return;
+          const note = currentNote(); if (!note) return;
+          const [kind, rawIndex] = remove.dataset.removeVisual.split(":");
+          const list = kind === "map" ? note.maps : note.media;
+          if (!list) return;
+          list.splice(Number(rawIndex), 1); saveState(); renderWorkspace();
+        });
+        $("#note-pending-results").addEventListener("click", event => {
+          if (!event.target.closest("#add-selected-sources")) return;
+          const note = currentNote(); if (!note) return;
+          const indexes = [...$("#note-pending-results").querySelectorAll("[data-pending-index]:checked")].map(input => Number(input.dataset.pendingIndex));
+          if (!indexes.length) return toast("Select at least one source first");
+          indexes.forEach(index => addSourceToNote(note, state.pendingNoteResults[index]));
+          note.updated = new Date().toISOString(); saveState(); state.pendingNoteResults = []; renderWorkspace(); toast(`Added ${indexes.length} item${indexes.length === 1 ? "" : "s"} to “${note.title}”`);
+        });
+        $("#note-target-cancel").addEventListener("click", () => { $("#note-target-overlay").classList.remove("open"); $("#note-target-overlay").setAttribute("aria-hidden", "true"); pendingNoteAdd = null; });
+        $("#note-target-new").addEventListener("click", () => {
+          const item = pendingNoteAdd; if (!item) return;
+          const note = newNote(item.source?.title || state.currentQuery || "Research notes");
+          addSourceToNote(note, item.source);
+          if (item.quote) note.body += `${note.body ? "\n\n" : ""}> ${item.quote.replace(/\n+/g, "\n> ")}${item.source ? `\n> Source: ${item.source.provider} — ${item.source.title}` : ""}`;
+          note.updated = new Date().toISOString(); saveState(); renderedNoteId = null;
+          $("#note-target-overlay").classList.remove("open"); $("#note-target-overlay").setAttribute("aria-hidden", "true"); pendingNoteAdd = null; openWorkspace(); toast(`Saved in “${note.title}”`);
+        });
+        $("#note-target-confirm").addEventListener("click", () => {
+          const item = pendingNoteAdd, note = state.notes.find(entry => entry.id === $("#note-target-select").value); if (!item || !note) return;
+          updateActiveNote(); addSourceToNote(note, item.source);
+          if (item.quote) note.body += `${note.body ? "\n\n" : ""}> ${item.quote.replace(/\n+/g, "\n> ")}${item.source ? `\n> Source: ${item.source.provider} — ${item.source.title}` : ""}`;
+          note.updated = new Date().toISOString(); saveState();
+          $("#note-target-overlay").classList.remove("open"); $("#note-target-overlay").setAttribute("aria-hidden", "true"); pendingNoteAdd = null;
+          state.activeFolderId = "all"; state.activeNoteId = note.id; renderedNoteId = null; openWorkspace(); toast(`Saved in “${note.title}”`);
+        });
+        $("#note-target-overlay").addEventListener("click", event => { if (event.target === $("#note-target-overlay")) $("#note-target-cancel").click(); });
+        $("#app-dialog-cancel").addEventListener("click", () => closeAppDialog(false));
+        $("#app-dialog-confirm").addEventListener("click", () => closeAppDialog(true));
+        $("#app-dialog-overlay").addEventListener("click", event => { if (event.target === $("#app-dialog-overlay")) closeAppDialog(false); });
+        $("#app-dialog-input").addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); closeAppDialog(true); } });
+        $("#selection-add-button").addEventListener("pointerdown", event => event.preventDefault());
+        $("#selection-add-button").addEventListener("click", () => {
+          const selection = window.getSelection(), text = selection?.toString().trim(); if (!text) return;
+          const anchor = selection.anchorNode?.parentElement, card = anchor?.closest(".source-result, .answer-card");
+          const sourceId = card?.dataset.sourceId || $("#read-overview-button").dataset.readSource;
+          const source = anchor?.closest("#reader-content") ? readerSourceCurrent : sourceId ? state.pool.get(sourceId) || currentNote()?.sources.find(item => item.id === sourceId) : null;
+          $("#selection-popover").classList.add("hidden"); openNoteTarget(source, text);
+        });
+        document.addEventListener("mouseup", event => {
+          const selection = window.getSelection(), text = selection?.toString().trim();
+          const target = event.target instanceof Element ? event.target : selection?.anchorNode?.parentElement;
+          const selectedFrom = selection?.anchorNode?.parentElement;
+          const allowed = target?.closest("#results, #reader-content, #note-pending-results, #note-searches")
+            || selectedFrom?.closest("#results, #reader-content, #note-pending-results, #note-searches");
+          const popover = $("#selection-popover");
+          if (!text || !allowed) return show(popover, false);
+          const rect = selection.getRangeAt(0).getBoundingClientRect();
+          popover.style.left = `${Math.max(100, Math.min(innerWidth - 100, rect.left + rect.width / 2))}px`;
+          popover.style.top = `${Math.max(55, rect.top - 8)}px`; show(popover, true);
+        });
+        document.addEventListener("keyup", event => { if (event.shiftKey || event.key.startsWith("Arrow")) document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true })); });
+        $("#save-button").addEventListener("click", () => {
+          if (!state.currentResults.length) return;
+          newNote(state.currentQuery, "", state.currentResults.slice(0, 15).map(item => ({ ...item, query: state.currentQuery })));
+          openWorkspace(); toast("Note created with the top sources");
+        });
+        $("#export-current-button").addEventListener("click", async () => {
+          if (!state.currentResults.length) return;
+          const button = $("#export-current-button"); button.disabled = true; button.textContent = "Preparing article…";
+          try { downloadBlob(`${fileName({ title: state.currentQuery })}-article.txt`, await currentSearchArticle(), "text/plain"); }
+          catch { toast("The full article could not be downloaded right now"); }
+          finally { button.disabled = false; button.textContent = "Download full article"; }
+        });
+        $("#export-select").addEventListener("change", event => { const kind = event.target.value; event.target.value = ""; if (kind) exportNote(kind); });
+        $("#import-button").addEventListener("click", () => $("#import-file").click());
+        $("#import-file").addEventListener("change", async event => {
+          const file = event.target.files[0]; if (!file) return; const text = await file.text(); event.target.value = "";
+          try {
+            if (file.name.endsWith(".json")) {
+              const data = JSON.parse(text), have = new Set(state.notes.map(n => n.id));
+              (data.folders || []).forEach(f => { if (!state.folders.some(x => x.id === f.id)) state.folders.push(f); });
+              (data.notes || []).forEach(n => { if (!have.has(n.id)) state.notes.push({ tags: [], sources: [], maps: [], media: [], body: "", ...n, maps: Array.isArray(n.maps) ? n.maps : [], media: Array.isArray(n.media) ? n.media : [] }); });
+            } else newNote(text.match(/^#\s+(.*)/m)?.[1] || file.name.replace(/\.\w+$/, ""), text.replace(/^#\s+.*\n+/, ""));
+            saveState(); renderedNoteId = null; renderWorkspace(); toast("Imported");
+          } catch { toast("Could not read that file"); }
+        });
+        document.addEventListener("keydown", event => {
+          if (event.key !== "Escape") return;
+          if ($("#reader-overlay").classList.contains("open")) closeSourceReader();
+          else if ($("#app-dialog-overlay").classList.contains("open")) closeAppDialog(false);
+          else if ($("#note-target-overlay").classList.contains("open")) $("#note-target-cancel").click();
+          else if ($("#note-workspace").classList.contains("open")) closeWorkspace();
+        });
+        window.addEventListener("beforeunload", updateActiveNote);
+        document.addEventListener("visibilitychange", () => { if (document.hidden) updateActiveNote(); });
+
+        initializeStorage();
+        renderLibrary();
+        animatePlaceholder();
+        const initial = new URLSearchParams(location.search).get("q");
+        if (initial) { $("#search-input").value = initial; runGlobalSearch(initial); }
+      })();
+    </script>
+  </body>
+</html>
