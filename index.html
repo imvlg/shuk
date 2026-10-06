@@ -544,7 +544,7 @@ textarea.field{min-height:120px;resize:vertical;line-height:1.5}
 <script>
 (() => {
 "use strict";
-/* ============ utilities ============ *
+/* ============ utilities ============ */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
